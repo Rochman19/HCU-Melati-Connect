@@ -1,0 +1,3963 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCU Melati Smart Care Connect - RSUD Bangil</title>
+    <!-- Google Fonts, Font Awesome & Chart.js CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* PALET TEMA CSS MODERN MEDICAL TECH */
+        :root, body[data-theme="light"] {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --dark-text: #0f172a;
+            --gray-text: #64748b;
+            --header-bg: rgba(255, 255, 255, 0.88);
+            --border-color: #e2e8f0;
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --secondary: #0d9488;
+            --vital-bg: #ffffff;
+            --chat-bg: #f1f5f9;
+            --chat-recv: #e2e8f0;
+            --table-header-bg: #f8fafc;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --purple: #8b5cf6;
+        }
+
+        body[data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --dark-text: #f8fafc;
+            --gray-text: #94a3b8;
+            --header-bg: rgba(15, 23, 42, 0.88);
+            --border-color: #334155;
+            --primary: #38bdf8;
+            --primary-dark: #0284c7;
+            --secondary: #2dd4bf;
+            --vital-bg: #1e293b;
+            --chat-bg: #0f172a;
+            --chat-recv: #334155;
+            --table-header-bg: #334155;
+            --danger: #f87171;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --purple: #a78bfa;
+        }
+
+        body[data-theme="emerald"] {
+            --bg-color: #ecfdf5;
+            --card-bg: #ffffff;
+            --dark-text: #064e3b;
+            --gray-text: #047857;
+            --header-bg: rgba(255, 255, 255, 0.88);
+            --border-color: #a7f3d0;
+            --primary: #059669;
+            --primary-dark: #047857;
+            --secondary: #0d9488;
+            --vital-bg: #f0fdf4;
+            --chat-bg: #f0fdf4;
+            --chat-recv: #dcfce7;
+            --table-header-bg: #dcfce7;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --purple: #8b5cf6;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--dark-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* LIVE PULSE DOT INDICATOR */
+        .live-dot {
+            width: 9px;
+            height: 9px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+            animation: pulseLive 2s infinite;
+        }
+
+        @keyframes pulseLive {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* ANIMASI TTS VOICE WAVE PULSE */
+        .btn-voice-active {
+            background: var(--purple) !important;
+            color: white !important;
+            border-color: var(--purple) !important;
+            animation: audioWavePulse 1.5s infinite ease-in-out;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5) !important;
+        }
+
+        @keyframes audioWavePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Header / Navbar */
+        header {
+            background: var(--header-bg);
+            backdrop-filter: blur(12px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .hospital-icon {
+            font-size: 2.2rem;
+            color: var(--primary);
+            transition: transform 0.3s ease;
+        }
+
+        .logo-container:hover .hospital-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .logo-text { display: flex; flex-direction: column; }
+        .logo-title { font-weight: 700; font-size: 1.2rem; color: var(--primary); line-height: 1.2; }
+        .logo-subtitle { font-size: 0.8rem; color: var(--gray-text); font-weight: 500; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+
+        .btn-theme-toggle {
+            background: var(--card-bg);
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+            padding: 0.5rem 1.1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .btn-theme-toggle:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+
+        .btn-nav-outline {
+            background: var(--card-bg);
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-nav-outline:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+        }
+
+        /* Main Container */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem 5%;
+        }
+
+        .container { max-width: 1000px; width: 100%; }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+
+        .view-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* HERO VIEW */
+        .hero { text-align: center; position: relative; padding: 1rem 0; }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(2, 132, 199, 0.15) 0%, rgba(13, 148, 136, 0.05) 50%, transparent 70%);
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulseBg 6s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulseBg {
+            0% { transform: translateX(-50%) scale(0.9); opacity: 0.6; }
+            100% { transform: translateX(-50%) scale(1.2); opacity: 1; }
+        }
+
+        .hero-animate {
+            opacity: 0;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.25s; }
+        .delay-3 { animation-delay: 0.4s; }
+        .delay-4 { animation-delay: 0.55s; }
+        .delay-5 { animation-delay: 0.7s; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .badge {
+            background-color: var(--card-bg);
+            color: var(--primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        }
+
+        .hero h1 {
+            font-size: 2.7rem;
+            line-height: 1.25;
+            color: var(--dark-text);
+            margin-bottom: 1.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .hero p {
+            color: var(--gray-text);
+            font-size: 1.1rem;
+            max-width: 650px;
+            margin: 0 auto 2.5rem auto;
+            line-height: 1.7;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(2, 132, 199, 0.3);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 18px 35px rgba(2, 132, 199, 0.4);
+        }
+
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3.5rem;
+            text-align: left;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 1.8rem 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover { transform: translateY(-8px); border-color: var(--primary); }
+        .feature-card:hover::after { opacity: 1; }
+
+        .feature-card i { font-size: 2.2rem; color: var(--primary); margin-bottom: 1rem; display: inline-block; }
+        .feature-card h3 { font-size: 1.15rem; margin-bottom: 0.5rem; color: var(--dark-text); }
+        .feature-card p { font-size: 0.9rem; color: var(--gray-text); line-height: 1.6; }
+
+        /* PETUNJUK PENGGUNAAN */
+        .guide-tabs { display: flex; justify-content: center; gap: 12px; margin-bottom: 2.5rem; }
+        .guide-tab-btn {
+            padding: 0.8rem 1.8rem;
+            border-radius: 50px;
+            border: 2px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--gray-text);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .guide-tab-btn.active-patient { background: linear-gradient(135deg, var(--primary), #0284c7); color: white; border-color: transparent; }
+        .guide-tab-btn.active-nurse { background: linear-gradient(135deg, var(--secondary), #0f766e); color: white; border-color: transparent; }
+
+        .guide-timeline {
+            position: relative;
+            max-width: 750px;
+            margin: 0 auto;
+            padding-left: 2.5rem;
+            border-left: 3px dashed var(--border-color);
+            text-align: left;
+        }
+
+        .guide-step-card {
+            position: relative;
+            margin-bottom: 2rem;
+            padding: 1.4rem 1.8rem;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        .guide-step-card:hover { transform: translateX(8px); }
+
+        .guide-step-badge {
+            position: absolute;
+            left: -3.85rem;
+            top: 1.2rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 0 0 5px var(--bg-color), 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .guide-step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 0.6rem; }
+        .guide-step-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(2, 132, 199, 0.15);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .guide-step-title { font-size: 1.1rem; font-weight: 700; color: var(--dark-text); }
+        .guide-step-desc { font-size: 0.92rem; color: var(--gray-text); line-height: 1.6; }
+
+        /* Login Selection View */
+        .login-selection { text-align: center; }
+        .login-selection h2 { font-size: 2rem; margin-bottom: 0.5rem; }
+        .login-selection p { color: var(--gray-text); margin-bottom: 3rem; }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            align-items: stretch;
+        }
+
+        .option-card {
+            background: var(--card-bg);
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .option-card:hover { border-color: var(--primary); transform: translateY(-8px); }
+        .option-card-body { display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+        .icon-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .patient-card .icon-box { background-color: rgba(2, 132, 199, 0.15); color: var(--primary); }
+        .nurse-card .icon-box { background-color: rgba(13, 148, 136, 0.15); color: var(--secondary); }
+
+        .option-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--dark-text); }
+        .option-card p { color: var(--gray-text); font-size: 0.9rem; line-height: 1.5; margin-bottom: 2rem; }
+
+        .btn-select {
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: auto;
+            background-color: var(--bg-color);
+            color: var(--primary);
+        }
+
+        .option-card:hover .btn-select { background-color: var(--primary); color: white; }
+
+        /* Form Box */
+        .form-box {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 20px;
+            max-width: 450px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-color);
+        }
+
+        .form-group { margin-bottom: 1.2rem; text-align: left; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--dark-text); }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background-color: var(--card-bg);
+            color: var(--dark-text);
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-submit:hover { background: var(--primary-dark); }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.9rem 1.2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            height: 48px;
+        }
+
+        .btn-danger:hover { background: #dc2626; }
+
+        .btn-back {
+            background: none;
+            border: none;
+            color: var(--gray-text);
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-back:hover { color: var(--dark-text); }
+
+        /* DASHBOARD STYLES */
+        .dashboard-header {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        .nurse-quick-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-quick-modal {
+            flex: 1;
+            min-width: 200px;
+            background: var(--card-bg);
+            border: 1.5px solid var(--border-color);
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--dark-text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-quick-modal:hover {
+            border-color: var(--secondary);
+            color: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .vital-card {
+            background: var(--vital-bg);
+            padding: 1.2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border-left: 5px solid var(--primary);
+            border-top: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .vital-card.warning { border-left-color: var(--warning); }
+        .vital-card.success { border-left-color: var(--success); }
+        .vital-card.info { border-left-color: var(--secondary); }
+
+        .vital-card span { font-size: 0.85rem; color: var(--gray-text); }
+        .vital-card h4 { font-size: 1.2rem; margin-top: 0.3rem; color: var(--dark-text); font-weight: 600; }
+
+        .dash-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 1.5rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        .dash-card h3 { font-size: 1.1rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 10px; color: var(--primary); }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-logout:hover { background: rgba(239, 68, 68, 0.25); }
+
+        /* SEARCH BAR PASIEN AKTIF */
+        .search-patient-box {
+            position: relative;
+            margin-bottom: 1.2rem;
+        }
+        .search-patient-box input {
+            width: 100%;
+            padding: 0.7rem 1rem 0.7rem 2.6rem;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--dark-text);
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .search-patient-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-text);
+            font-size: 0.95rem;
+        }
+
+        /* TABEL PASIEN PERAWAT */
+        .patient-table-container { overflow-x: auto; }
+        .patient-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+        .patient-table th, .patient-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+        .patient-table th { background-color: var(--table-header-bg); color: var(--dark-text); font-weight: 600; }
+        .patient-table tr:hover { background-color: rgba(2, 132, 199, 0.04); }
+
+        .btn-action-table {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action-table:hover { opacity: 0.9; }
+
+        .chat-notif-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 6px;
+            animation: pulseNotif 2s infinite ease-in-out;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes pulseNotif {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+
+        /* TIMELINE ITEM */
+        .timeline-item {
+            background: var(--vital-bg);
+            border-left: 4px solid var(--primary);
+            padding: 1.2rem;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 1.2rem;
+            border-top: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .timeline-time { font-size: 0.9rem; font-weight: 600; color: var(--dark-text); }
+
+        .timeline-vitals-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: var(--card-bg);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.5rem;
+            font-family: monospace, 'Poppins', sans-serif;
+        }
+
+        .vital-row-item { display: flex; justify-content: flex-start; gap: 15px; font-size: 0.88rem; line-height: 1.3; }
+        .vital-label { color: var(--gray-text); font-weight: 600; width: 90px; flex-shrink: 0; }
+        .vital-value { color: var(--dark-text); font-weight: 700; text-align: left; }
+
+        .timeline-note-box {
+            background: rgba(2, 132, 199, 0.08);
+            border-left: 3px solid var(--primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: var(--dark-text);
+            line-height: 1.5;
+        }
+
+        /* CHAT SYSTEM */
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            height: 360px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: var(--chat-bg);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .chat-message.sent {
+            align-self: flex-end;
+            background-color: var(--primary);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-message.received {
+            align-self: flex-start;
+            background-color: var(--chat-recv);
+            color: var(--dark-text);
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-message .meta {
+            font-size: 0.7rem;
+            margin-top: 4px;
+            opacity: 0.8;
+            text-align: right;
+            display: block;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 0.8rem;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            gap: 8px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            background: var(--card-bg);
+            color: var(--dark-text);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-chat-send {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 8px;
+            font-size: 1.8rem;
+            color: var(--border-color);
+            cursor: pointer;
+            margin: 0.5rem 0;
+        }
+
+        .star-rating i.active { color: var(--warning); }
+
+        /* FAB CHAT LINGKARAN DENGAN 4 BENTUK BULAT */
+        .fab-chat-wrapper {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fab-speed-dial {
+            display: none;
+            flex-direction: column-reverse;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+            z-index: 1000;
+        }
+
+        .fab-speed-dial.active {
+            display: flex;
+            animation: popUpSpeedDial 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popUpSpeedDial {
+            from { opacity: 0; transform: translateY(15px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .fab-sub-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .fab-sub-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .fab-sub-item:hover .fab-sub-btn {
+            transform: scale(1.12);
+            background: var(--primary);
+            color: white;
+        }
+
+        .fab-sub-label {
+            background: var(--card-bg);
+            color: var(--dark-text);
+            border: 1px solid var(--border-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .fab-main-btn-wrapper { display: flex; align-items: center; gap: 10px; }
+
+        .fab-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(2, 132, 199, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .fab-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 12px 30px rgba(2, 132, 199, 0.45);
+        }
+
+        .fab-btn.active-open i {
+            transform: rotate(135deg);
+            transition: transform 0.4s ease;
+        }
+
+        .fab-tooltip {
+            background: var(--card-bg);
+            color: var(--dark-text);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            animation: fadeInOutPeriodic 6s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes fadeInOutPeriodic {
+            0%, 100% { opacity: 0; transform: translateX(-10px); visibility: hidden; }
+            25%, 75% { opacity: 1; transform: translateX(0); visibility: visible; }
+        }
+
+        /* MODAL POPUPS & TOAST CONTAINER */
+        #toast-container {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-card {
+            background: var(--card-bg);
+            color: var(--dark-text);
+            border-left: 5px solid var(--primary);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            border-top: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .chat-modal-dialog {
+            background: var(--card-bg);
+            color: var(--dark-text);
+            width: 92%;
+            max-width: 580px;
+            max-height: 90vh;
+            border-radius: 24px;
+            padding: 1.8rem;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-modal-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .chat-tab-btn {
+            flex: 1;
+            padding: 0.6rem 0.8rem;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--gray-text);
+            font-weight: 600;
+            font-size: 0.82rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .chat-tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-backdrop.active { display: flex; }
+
+        .modal-content {
+            background: var(--card-bg);
+            color: var(--dark-text);
+            width: 90%;
+            max-width: 650px;
+            max-height: 85vh;
+            border-radius: 16px;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.2rem;
+            right: 1.2rem;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: var(--gray-text);
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 5%;
+            color: var(--gray-text);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--card-bg);
+            margin-top: auto;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a { color: var(--primary); text-decoration: none; font-weight: 500; }
+        .footer-links a:hover { text-decoration: underline; }
+
+        .action-buttons-container { display: flex; gap: 1rem; margin-top: 0.5rem; }
+        .dropdown-wrapper { position: relative; flex: 1; }
+
+        .status-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            bottom: calc(100% + 8px);
+            width: 100%;
+            min-width: 320px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            box-sizing: border-box;
+        }
+
+        .status-menu label { display: block; font-size: 0.85rem; color: var(--dark-text); margin-bottom: 6px; font-weight: 600; }
+        .status-menu select, .status-menu textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--dark-text);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .menu-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+        .btn-sub { padding: 6px 14px; font-size: 0.85rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; }
+        .btn-cancel { background-color: var(--border-color); color: var(--dark-text); }
+        .btn-submit-discharge { background-color: var(--danger); color: #ffffff; }
+
+        .shift-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .shift-pagi { background-color: #fef3c7; color: #b45309; }
+        .shift-sore { background-color: #e0e7ff; color: #3730a3; }
+        .shift-malam { background-color: #f3e8ff; color: #6b21a8; }
+
+        /* CETAK LAPORAN (PRINT CSS) */
+        @media print {
+            header, footer, .fab-chat-wrapper, .btn-logout, .btn-nav-outline, .btn-theme-toggle { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .dash-card, .vital-card { box-shadow: none !important; border: 1px solid #ccc !important; }
+        }
+
+        /* =========================================================
+           RESPONSIVE MOBILE - PERAPIHAN TAMPILAN SMARTPHONE
+           ========================================================= */
+        @media (max-width: 768px) {
+            html, body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            body {
+                min-width: 0;
+            }
+
+            header {
+                padding: 0.75rem 1rem;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+                position: sticky;
+            }
+
+            .logo-container {
+                width: 100%;
+                gap: 9px;
+                min-width: 0;
+            }
+
+            .hospital-icon {
+                font-size: 1.8rem;
+                flex-shrink: 0;
+            }
+
+            .logo-text {
+                min-width: 0;
+            }
+
+            .logo-title {
+                font-size: 1rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .logo-subtitle {
+                font-size: 0.72rem;
+                white-space: nowrap;
+            }
+
+            .header-actions {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 0.6rem;
+                flex-wrap: nowrap;
+            }
+
+            .header-actions button {
+                width: 100%;
+                min-width: 0;
+                min-height: 44px;
+                padding: 0.65rem 0.6rem !important;
+                font-size: 0.78rem !important;
+                line-height: 1.2;
+                justify-content: center;
+                white-space: normal;
+            }
+
+            .header-actions .btn-primary {
+                grid-column: auto;
+            }
+
+            .header-actions .btn-theme-toggle,
+            .header-actions .btn-nav-outline {
+                border-radius: 12px;
+            }
+
+            main {
+                width: 100%;
+                padding: 1rem 0.85rem 5rem;
+            }
+
+            .container {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+            }
+
+            .view-section {
+                width: 100%;
+                min-width: 0;
+            }
+
+            /* HERO */
+            .hero {
+                padding: 0.5rem 0;
+            }
+
+            .hero::before {
+                width: 260px;
+                height: 260px;
+                top: -20px;
+            }
+
+            .badge {
+                max-width: 100%;
+                padding: 7px 12px;
+                margin-bottom: 1rem;
+                font-size: 0.72rem;
+                line-height: 1.35;
+                white-space: normal;
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: clamp(1.65rem, 8vw, 2rem);
+                line-height: 1.2;
+                margin-bottom: 0.85rem;
+                letter-spacing: -0.3px;
+            }
+
+            .hero p {
+                font-size: 0.9rem;
+                line-height: 1.6;
+                margin-bottom: 1.4rem;
+            }
+
+            .btn-primary {
+                width: 100%;
+                max-width: 100%;
+                padding: 0.85rem 1rem;
+                font-size: 0.92rem;
+                justify-content: center;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+                gap: 0.85rem;
+                margin-top: 1.8rem;
+            }
+
+            .feature-card {
+                padding: 1.15rem 1rem;
+                border-radius: 15px;
+            }
+
+            .feature-card i {
+                font-size: 1.7rem;
+                margin-bottom: 0.65rem;
+            }
+
+            .feature-card h3 {
+                font-size: 1rem;
+            }
+
+            .feature-card p {
+                font-size: 0.82rem;
+                line-height: 1.5;
+            }
+
+            /* GUIDE */
+            .guide-tabs {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 0.55rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .guide-tab-btn {
+                width: 100%;
+                min-height: 44px;
+                padding: 0.7rem 0.75rem;
+                font-size: 0.8rem;
+                justify-content: center;
+                border-radius: 12px;
+            }
+
+            .guide-timeline {
+                width: calc(100% - 0.25rem);
+                max-width: none;
+                margin: 0 auto;
+                padding-left: 2rem;
+                border-left-width: 2px;
+            }
+
+            .guide-step-card {
+                margin-bottom: 1rem;
+                padding: 1rem;
+                border-radius: 14px;
+            }
+
+            .guide-step-badge {
+                left: -2.15rem !important;
+                top: 0.9rem;
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 0.72rem !important;
+                box-shadow: 0 0 0 4px var(--bg-color), 0 3px 8px rgba(0,0,0,0.12);
+            }
+
+            .guide-step-header {
+                align-items: flex-start;
+                gap: 8px;
+                margin-bottom: 0.5rem;
+            }
+
+            .guide-step-icon {
+                width: 32px;
+                height: 32px;
+                min-width: 32px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+            }
+
+            .guide-step-title {
+                font-size: 0.92rem;
+                line-height: 1.35;
+            }
+
+            .guide-step-desc {
+                font-size: 0.8rem;
+                line-height: 1.55;
+            }
+
+            /* LOGIN */
+            .login-selection h2 {
+                font-size: 1.45rem;
+            }
+
+            .login-selection p {
+                font-size: 0.85rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+                gap: 0.9rem;
+                max-width: none;
+            }
+
+            .option-card {
+                padding: 1.4rem 1.1rem;
+                border-radius: 16px;
+            }
+
+            .icon-box {
+                width: 64px;
+                height: 64px;
+                font-size: 1.8rem;
+                margin-bottom: 1rem;
+            }
+
+            .option-card h3 {
+                font-size: 1.05rem;
+            }
+
+            .option-card p {
+                font-size: 0.82rem;
+                margin-bottom: 1.2rem;
+            }
+
+            .btn-select {
+                min-height: 44px;
+                font-size: 0.85rem;
+            }
+
+            /* FORM & DASHBOARD */
+            .form-box {
+                width: 100%;
+                max-width: none;
+                padding: 1.2rem;
+                border-radius: 15px;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                min-height: 44px;
+                font-size: 0.9rem;
+            }
+
+            .dashboard-header {
+                padding: 1rem;
+                margin-bottom: 0.9rem;
+                border-radius: 14px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+
+            .dashboard-header h2,
+            .dashboard-header h3 {
+                font-size: 1.15rem;
+                line-height: 1.35;
+            }
+
+            .nurse-quick-actions {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 0.55rem;
+                margin-bottom: 0.9rem;
+            }
+
+            .btn-quick-modal {
+                min-width: 0;
+                width: 100%;
+                min-height: 44px;
+                padding: 0.7rem 0.8rem;
+                font-size: 0.82rem;
+            }
+
+            .vitals-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.65rem;
+                margin-bottom: 0.9rem;
+            }
+
+            .vital-card {
+                min-width: 0;
+                padding: 0.85rem;
+                border-radius: 12px;
+                border-left-width: 4px;
+            }
+
+            .vital-card span {
+                font-size: 0.72rem;
+            }
+
+            .vital-card h4 {
+                font-size: 0.95rem;
+                word-break: break-word;
+            }
+
+            .dash-card {
+                padding: 1rem;
+                margin-bottom: 0.9rem;
+                border-radius: 14px;
+            }
+
+            .dash-card h3 {
+                font-size: 0.95rem;
+            }
+
+            .timeline-item {
+                padding: 0.9rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .timeline-header {
+                align-items: flex-start;
+            }
+
+            .timeline-time {
+                font-size: 0.8rem;
+            }
+
+            .timeline-vitals-vertical {
+                padding: 7px 9px;
+            }
+
+            .vital-row-item {
+                gap: 8px;
+                font-size: 0.78rem;
+            }
+
+            .vital-label {
+                width: 72px;
+            }
+
+            .timeline-note-box {
+                padding: 8px 10px;
+                font-size: 0.78rem;
+            }
+
+            /* TABLE: tetap bisa digeser horizontal, tidak merusak layout */
+            .patient-table-container {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-radius: 10px;
+            }
+
+            .patient-table {
+                min-width: 650px;
+                font-size: 0.78rem;
+            }
+
+            .patient-table th,
+            .patient-table td {
+                padding: 9px 10px;
+                white-space: nowrap;
+            }
+
+            .btn-action-table {
+                min-height: 36px;
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+
+            /* CHAT */
+            .chat-box {
+                height: min(55vh, 420px);
+                min-height: 300px;
+                border-radius: 12px;
+            }
+
+            .chat-messages {
+                padding: 0.75rem;
+            }
+
+            .chat-message {
+                max-width: 88%;
+                font-size: 0.8rem;
+                padding: 9px 11px;
+            }
+
+            .chat-input-area {
+                padding: 0.6rem;
+            }
+
+            .chat-input-area input {
+                min-width: 0;
+                font-size: 0.82rem;
+            }
+
+            .btn-chat-send {
+                width: 40px;
+                min-width: 40px;
+                height: 40px;
+            }
+
+            /* MODAL */
+            .modal-backdrop {
+                padding: 0.75rem;
+            }
+
+            .modal-content,
+            .chat-modal-dialog {
+                width: 100%;
+                max-width: none;
+                max-height: 88vh;
+                padding: 1rem;
+                border-radius: 16px;
+            }
+
+            .chat-modal-tabs {
+                gap: 5px;
+                overflow-x: auto;
+                padding-bottom: 8px;
+            }
+
+            .chat-tab-btn {
+                min-width: 120px;
+                min-height: 42px;
+                padding: 0.55rem 0.6rem;
+                font-size: 0.74rem;
+            }
+
+            .modal-close {
+                top: 0.8rem;
+                right: 0.8rem;
+                font-size: 1.2rem;
+            }
+
+            /* STATUS MENU */
+            .status-menu {
+                position: fixed;
+                top: 50%;
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: auto;
+                width: auto;
+                min-width: 0;
+                max-height: 80vh;
+                overflow-y: auto;
+                transform: translateY(-50%);
+                padding: 1rem;
+                border-radius: 16px;
+                z-index: 1100;
+            }
+
+            .action-buttons-container {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 0.6rem;
+            }
+
+            .menu-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            /* FAB */
+            .fab-chat-wrapper {
+                bottom: calc(12px + env(safe-area-inset-bottom));
+                left: 12px;
+            }
+
+            .fab-btn {
+                width: 52px;
+                height: 52px;
+                font-size: 1.25rem;
+            }
+
+            .fab-sub-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 1rem;
+            }
+
+            .fab-sub-label {
+                display: none;
+            }
+
+            #toast-container {
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: calc(12px + env(safe-area-inset-bottom));
+            }
+
+            .toast-card {
+                width: 100%;
+                padding: 10px 12px;
+                font-size: 0.8rem;
+            }
+
+            footer {
+                padding: 1.2rem 1rem;
+                font-size: 0.75rem;
+            }
+
+            .footer-links {
+                gap: 0.8rem;
+            }
+        }
+
+        /* Pastikan semua tombol header tersusun vertikal di smartphone */
+        @media screen and (max-width: 768px) {
+            header {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0.75rem 1rem;
+                gap: 0.75rem;
+            }
+
+            .logo-container {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header-actions {
+                width: 100%;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.6rem !important;
+            }
+
+            .header-actions > button {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: none !important;
+                min-height: 46px;
+                margin: 0 !important;
+                justify-content: center;
+            }
+
+            .header-actions .btn-primary {
+                grid-column: auto !important;
+            }
+        }
+
+        /* Smartphone kecil: 360px ke bawah */
+        @media (max-width: 380px) {
+            main {
+                padding-left: 0.65rem;
+                padding-right: 0.65rem;
+            }
+
+            header {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+
+            .header-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .header-actions .btn-primary {
+                grid-column: auto;
+            }
+
+            .vitals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .guide-timeline {
+                padding-left: 1.75rem;
+            }
+
+            .guide-step-badge {
+                left: -1.95rem !important;
+                width: 29px !important;
+                height: 29px !important;
+                font-size: 0.65rem !important;
+            }
+
+            .guide-step-title {
+                font-size: 0.86rem;
+            }
+
+            .guide-step-desc {
+                font-size: 0.76rem;
+            }
+        }
+
+    </style>
+
+    <!-- Supabase: database online untuk sinkronisasi lintas perangkat -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // =========================================================
+        // KONFIGURASI SUPABASE
+        // Ganti dua nilai di bawah setelah membuat project Supabase.
+        // Gunakan Publishable key / anon key, JANGAN service_role/secret key.
+        // =========================================================
+        const SUPABASE_URL = 'https://vmdfdslklwxmotvmditp.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_QcjwxKLMV6idSBh-hI5aBw_DZq1zfGv';
+        let supabaseClient = null;
+        if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('PASTE_') && !SUPABASE_PUBLISHABLE_KEY.includes('PASTE_')) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        }
+    </script>
+
+</head>
+<body data-theme="light">
+
+    <!-- Container Toast Notification -->
+    <div id="toast-container"></div>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="logo-container" onclick="showSection('hero-view')">
+            <i class="fa-solid fa-hospital-user hospital-icon"></i>
+            <div class="logo-text">
+                <span class="logo-title">HCU Melati Connect</span>
+                <span class="logo-subtitle"><span class="live-dot"></span> RSUD Bangil Pasuruan</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-theme-toggle" onclick="cycleTheme()" title="Ganti Tema Tampilan">
+                <i id="theme-icon" class="fa-solid fa-lightbulb" style="color: #f59e0b;"></i> 
+                <span id="theme-label">Terang</span>
+            </button>
+
+            <button class="btn-nav-outline" onclick="showSection('guide-view')">
+                <i class="fa-solid fa-book-open"></i> Petunjuk Penggunaan
+            </button>
+            <button class="btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.85rem;" onclick="showSection('contact-view')">
+                <i class="fa-solid fa-headset"></i> Kontak & Informasi
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            
+            <!-- LANDING PAGE -->
+            <section id="hero-view" class="view-section hero active">
+                <div class="hero-animate delay-1">
+                    <span class="badge"><i class="fa-solid fa-shield-halved"></i> Layanan Informasi Digital HCU</span>
+                </div>
+                
+                <div class="hero-animate delay-2">
+                    <h1>HCU Melati<br><span>Smart Care Connect</span></h1>
+                </div>
+
+                <div class="hero-animate delay-3">
+                    <p>Sistem informasi kondisi kesehatan pasien HCU Melati RSUD Bangil secara transparan, akurat, dan terhubung langsung antara tim medis dan keluarga pasien.</p>
+                </div>
+                
+                <div class="hero-animate delay-4">
+                    <button class="btn-primary" onclick="showSection('login-selection-view')">
+                        Masuk ke Sistem <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="features hero-animate delay-5">
+                    <div class="feature-card">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <h3>Update Real-Time</h3>
+                        <p>Dapatkan pembaruan kondisi vital pasien secara langsung dari petugas HCU.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fa-solid fa-comments"></i>
+                        <h3>Pesan Langsung</h3>
+                        <p>Fitur chat dua arah untuk koordinasi langsung antara keluarga & petugas medis.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fa-solid fa-shield-cat"></i>
+                        <h3>Aman & Terjaga</h3>
+                        <p>Akses data pasien terbatas dan terlindungi dengan verifikasi No. RM.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PETUNJUK PENGGUNAAN -->
+            <section id="guide-view" class="view-section">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <span class="badge"><i class="fa-solid fa-compass"></i> Panduan Langkah Mudah</span>
+                    <h2 style="font-size: 2rem; color: var(--dark-text); margin-top: 0.3rem;">Alur & Petunjuk Penggunaan</h2>
+                    <p style="color: var(--gray-text); font-size: 0.95rem; max-width: 600px; margin: 0 auto;">Pilih peran Anda di bawah ini untuk melihat alur pengoperasian sistem secara praktis.</p>
+                </div>
+
+                <div class="guide-tabs">
+                    <button class="guide-tab-btn active-patient" id="tab-btn-patient" onclick="switchGuideTab('patient')">
+                        <i class="fa-solid fa-users"></i> Untuk Keluarga Pasien
+                    </button>
+                    <button class="guide-tab-btn" id="tab-btn-nurse" onclick="switchGuideTab('nurse')">
+                        <i class="fa-solid fa-user-nurse"></i> Untuk Perawat / Medis
+                    </button>
+                </div>
+
+                <div id="guide-patient-content" class="guide-timeline-wrapper">
+                    <div class="guide-timeline">
+                        <div class="guide-step-card">
+                            <div class="guide-step-badge">01</div>
+                            <div class="guide-step-header">
+                                <div class="guide-step-icon"><i class="fa-solid fa-id-card"></i></div>
+                                <div class="guide-step-title">Registrasi Oleh Perawat HCU</div>
+                            </div>
+                            <div class="guide-step-desc">
+                                Sebelum masuk ke sistem, pastikan pasien sudah didaftarkan oleh perawat jaga HCU Melati. Perawat akan mencatat <strong>Nama Pasien</strong> dan <strong>Nomor Rekam Medis (No. RM)</strong> resmi.
+                            </div>
+                        </div>
+
+                        <div class="guide-step-card">
+                            <div class="guide-step-badge">02</div>
+                            <div class="guide-step-header">
+                                <div class="guide-step-icon"><i class="fa-solid fa-right-to-bracket"></i></div>
+                                <div class="guide-step-title">Login Akses Keluarga</div>
+                            </div>
+                            <div class="guide-step-desc">
+                                Klik tombol <strong>"Masuk ke Sistem"</strong> di halaman utama, pilih kategori <strong>Pasien / Keluarga</strong>, lalu masukkan Nama Pasien dan No. RM sesuai pendaftaran.
+                            </div>
+                        </div>
+
+                        <div class="guide-step-card">
+                            <div class="guide-step-badge">03</div>
+                            <div class="guide-step-header">
+                                <div class="guide-step-icon"><i class="fa-solid fa-chart-line"></i></div>
+                                <div class="guide-step-title">Pantau Perkembangan Vital (TTV)</div>
+                            </div>
+                            <div class="guide-step-desc">
+                                Didalam Dashboard Pasien, Anda dapat melihat kondisi <strong>Tanda Vital Terkini</strong> (Tensi, Nadi, Suhu, Respirasi, SpO2, Kesadaran) serta riwayat grafik perkembangan berkala.
+                            </div>
+                        </div>
+
+                        <div class="guide-step-card">
+                            <div class="guide-step-badge">04</div>
+                            <div class="guide-step-header">
+                                <div class="guide-step-icon"><i class="fa-solid fa-volume-high"></i></div>
+                                <div class="guide-step-title">Asisten Suara Read-Aloud</div>
+                            </div>
+                            <div class="guide-step-desc">
+                                Klik tombol <strong>"Bacakan Laporan"</strong> atau pilih ikon suara di menu melayang untuk mendengarkan pembacaan laporan TTV secara otomatis.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="guide-nurse-content" class="guide-timeline-wrapper" style="display: none;">
+                    <div class="guide-timeline" style="border-left-color: var(--secondary);">
+                        <div class="guide-step-card">
+                            <div class="guide-step-badge" style="background: linear-gradient(135deg, var(--secondary), #0f766e);">01</div>
+                            <div class="guide-step-header">
+                                <div class="guide-step-icon" style="background: rgba(13, 148, 136, 0.15); color: var(--secondary);"><i class="fa-solid fa-key"></i></div>
+                                <div class="guide-step-title">Login Portal Medis</div>
+                            </div>
+                            <div class="guide-step-desc">
+                                Pilih kategori <strong>Perawat / Medis</strong> di halaman login. Masukkan NIP Perawat (misal: <em>hcumelati</em>, <em>anang</em>, atau <em>eka lilis</em>) dan Kata Sandi resmi petugas untuk membuka portal.
+                            </div>
+                        </div>
+
+                        <div class="guide-step-card">
+                            <div class="guide-step-badge" style="background: linear-gradient(135deg, var(--secondary), #0f766e);">02</div>
+                            <div class="guide-step-header">
+                                <div class="guide-step-icon" style="background: rgba(13, 148, 136, 0.15); color: var(--secondary);"><i class="fa-solid fa-user-plus"></i></div>
+                                <div class="guide-step-title">Pendaftaran Pasien Baru HCU</div>
+                            </div>
+                            <div class="guide-step-desc">
+                                Daftarkan pasien baru yang masuk HCU Melati pada form registrasi. Input data lengkap berupa Nama, No. RM, dan Dokter DPJP Penanggung Jawab.
+                            </div>
+                        </div>
+
+                        <div class="guide-step-card">
+                            <div class="guide-step-badge" style="background: linear-gradient(135deg, var(--secondary), #0f766e);">03</div>
+                            <div class="guide-step-header">
+                                <div class="guide-step-icon" style="background: rgba(13, 148, 136, 0.15); color: var(--secondary);"><i class="fa-solid fa-pen-to-square"></i></div>
+                                <div class="guide-step-title">Input Vital Signs & Shift Log</div>
+                            </div>
+                            <div class="guide-step-desc">
+                                Klik tombol <strong>"Kelola / Input Data"</strong> pada daftar pasien aktif. Masukkan data TTV terbaru, tentukan Shift Dinas (Pagi/Sore/Malam), serta instruksi/catatan perkembangan pasien.
+                            </div>
+                        </div>
+
+                        <div class="guide-step-card">
+                            <div class="guide-step-badge" style="background: linear-gradient(135deg, var(--secondary), #0f766e);">04</div>
+                            <div class="guide-step-header">
+                                <div class="guide-step-icon" style="background: rgba(13, 148, 136, 0.15); color: var(--secondary);"><i class="fa-solid fa-box-archive"></i></div>
+                                <div class="guide-step-title">Buka & Restorasi Riwayat Pasien</div>
+                            </div>
+                            <div class="guide-step-desc">
+                                Buka modal Riwayat Pasien untuk melihat kembali data log lengkap pasien yang telah diakhiri atau mengaktifkan kembali status perawatan pasien jika dibutuhkan.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button class="btn-back" onclick="goBack()" style="margin-top: 0;">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali Ke Halaman Sebelumnya
+                    </button>
+                </div>
+            </section>
+
+            <!-- OPSI SELEKSI LOGIN -->
+            <section id="login-selection-view" class="view-section login-selection">
+                <h2>Pilih Akses Masuk</h2>
+                <p>Silakan pilih kategori pengguna untuk melanjutkan</p>
+
+                <div class="options-grid">
+                    <div class="option-card patient-card" onclick="showSection('login-patient-view')">
+                        <div class="option-card-body">
+                            <div class="icon-box">
+                                <i class="fa-solid fa-bed-pulse"></i>
+                            </div>
+                            <h3>Pasien / Keluarga</h3>
+                            <p>Masuk menggunakan Nama Pasien & No. RM yang telah terdaftar.</p>
+                        </div>
+                        <button class="btn-select">Login Keluarga Pasien</button>
+                    </div>
+
+                    <div class="option-card nurse-card" onclick="showSection('login-nurse-view')">
+                        <div class="option-card-body">
+                            <div class="icon-box">
+                                <i class="fa-solid fa-user-nurse"></i>
+                            </div>
+                            <h3>Perawat / Medis</h3>
+                            <p>Akses khusus petugas HCU untuk menginput data kondisi & registrasi pasien.</p>
+                        </div>
+                        <button class="btn-select">Login Petugas Perawat</button>
+                    </div>
+                </div>
+
+                <button class="btn-back" onclick="goBack()">
+                    <i class="fa-solid fa-arrow-left"></i> Kembali Ke Halaman Sebelumnya
+                </button>
+            </section>
+
+            <!-- FORM LOGIN PASIEN -->
+            <section id="login-patient-view" class="view-section text-center">
+                <div class="form-box">
+                    <h2>Login Keluarga Pasien</h2>
+                    <p style="color: var(--gray-text); font-size: 0.9rem; margin-bottom: 1.5rem;">Masukkan Nama & No. RM sesuai pendaftaran petugas HCU</p>
+                    
+                    <form onsubmit="handlePatientLogin(event)">
+                        <div class="form-group">
+                            <label>Nama Pasien</label>
+                            <input type="text" id="patient-name-input" placeholder="Contoh: Siti Aminah" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nomor Rekam Medis (No. RM)</label>
+                            <input type="text" id="patient-rm-input" placeholder="Contoh: 12345" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Masuk Dashboard Pasien</button>
+                    </form>
+                    <button class="btn-back" onclick="goBack()">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali Ke Halaman Sebelumnya
+                    </button>
+                </div>
+            </section>
+
+            <!-- FORM LOGIN PERAWAT -->
+            <section id="login-nurse-view" class="view-section text-center">
+                <div class="form-box">
+                    <h2>Login Perawat / Medis</h2>
+                    <p style="color: var(--gray-text); font-size: 0.9rem; margin-bottom: 1.5rem;">Portal khusus perawat jaga HCU Melati</p>
+                    
+                    <form onsubmit="handleNurseLogin(event)">
+                        <div class="form-group">
+                            <label>NIP / ID Perawat</label>
+                            <input type="text" id="nurse-id" placeholder="Masukkan NIP (Contoh: anang )" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Kata Sandi</label>
+                            <input type="password" id="nurse-pass" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn-submit" style="background-color: var(--secondary);">Masuk Portal Medis</button>
+                    </form>
+                    <button class="btn-back" onclick="goBack()">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali Ke Halaman Sebelumnya
+                    </button>
+                </div>
+            </section>
+
+            <!-- DASHBOARD PASIEN -->
+            <section id="dashboard-patient-view" class="view-section">
+                <div class="dashboard-header">
+                    <div>
+                        <h2 id="dash-patient-name">Nama Pasien</h2>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 4px;">
+                            <span style="color: var(--gray-text); font-size: 0.9rem;" id="dash-patient-rm">No. RM: -</span>
+                            <span style="color: var(--primary); font-size: 0.9rem; font-weight: 600;" id="dash-patient-dokter"><i class="fa-solid fa-user-doctor"></i> DPJP: -</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button class="btn-nav-outline" style="font-size: 0.82rem; padding: 0.4rem 0.9rem;" onclick="handlePatientDashBack()">
+                            <i class="fa-solid fa-arrow-left"></i> Kembali
+                        </button>
+                        <button class="btn-nav-outline" style="font-size: 0.82rem; padding: 0.4rem 0.9rem;" onclick="window.print()">
+                            <i class="fa-solid fa-print"></i> Cetak Laporan
+                        </button>
+                        <button id="main-voice-btn" class="btn-nav-outline" style="font-size: 0.82rem; padding: 0.4rem 0.9rem; border-color: var(--purple); color: var(--purple);" onclick="speakPatientStatus()">
+                            <i id="voice-btn-icon" class="fa-solid fa-volume-high"></i> <span id="voice-btn-label">Bacakan Laporan</span>
+                        </button>
+                        <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 1rem; text-align: left;">Pemantauan Tanda Vital Terkini</h3>
+                <div class="vitals-grid">
+                    <div class="vital-card success">
+                        <span>TD ( TENSI )</span>
+                        <h4 id="v-td">-</h4>
+                    </div>
+                    <div class="vital-card">
+                        <span>HR ( NADI )</span>
+                        <h4 id="v-nadi">-</h4>
+                    </div>
+                    <div class="vital-card info">
+                        <span>RR ( NAPAS )</span>
+                        <h4 id="v-rr">-</h4>
+                    </div>
+                    <div class="vital-card success">
+                        <span>SpO2</span>
+                        <h4 id="v-spo2">-</h4>
+                    </div>
+                    <div class="vital-card">
+                        <span>S ( SUHU )</span>
+                        <h4 id="v-suhu">-</h4>
+                    </div>
+                    <div class="vital-card info">
+                        <span>Alat O2</span>
+                        <h4 id="v-o2device">-</h4>
+                    </div>
+                    <div class="vital-card warning">
+                        <span>GCS</span>
+                        <h4 id="v-gcs">-</h4>
+                    </div>
+                </div>
+
+                <!-- GRAFIK TREN TTV -->
+                <div class="dash-card" style="padding: 1.2rem;">
+                    <h3 style="font-size: 1rem; margin-bottom: 0.6rem;"><i class="fa-solid fa-chart-line"></i> Grafik Ringkas Tren TTV Pasien</h3>
+                    <div style="position: relative; height: 160px; width: 100%;">
+                        <canvas id="patient-vitals-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dash-card">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Perkembangan Kondisi Pasien</h3>
+                    <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 1rem;">Catatan berkala dari perawat jaga pada setiap shift (Pagi, Sore, Malam):</p>
+                    <div id="patient-logs-timeline"></div>
+                </div>
+            </section>
+
+            <!-- DASHBOARD PERAWAT -->
+            <section id="dashboard-nurse-view" class="view-section">
+                <div class="dashboard-header">
+                    <div>
+                        <h2>Portal Perawat HCU Melati</h2>
+                        <span style="color: var(--gray-text); font-size: 0.9rem;" id="logged-nurse-label"><span class="live-dot"></span> Petugas Jaga: -</span>
+                    </div>
+                    <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+                </div>
+
+                <div class="nurse-quick-actions">
+                    <button type="button" class="btn-quick-modal" onclick="openHistoryModal()">
+                        <i class="fa-solid fa-box-archive" style="color: var(--primary);"></i> Lihat Riwayat Pasien Selesai
+                    </button>
+                    <button type="button" class="btn-quick-modal" onclick="openRatingsModal()">
+                        <i class="fa-solid fa-star-half-stroke" style="color: var(--warning);"></i> Lihat Ulasan & Rating Keluarga
+                    </button>
+                </div>
+
+                <div class="dash-card">
+                    <h3><i class="fa-solid fa-user-plus"></i> Registrasi Pasien Baru</h3>
+                    <form id="form-register-patient" onsubmit="handleRegisterPatient(event)">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Nama Pasien</label>
+                                <input type="text" id="reg-name" placeholder="Nama Lengkap Pasien" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Nomor Rekam Medis (No. RM)</label>
+                                <input type="text" id="reg-rm" placeholder="Nomor RM (Contoh: 12345)" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Dokter DPJP / Penanggung Jawab</label>
+                                <input type="text" id="reg-dokter" placeholder="Contoh: dr. Ahmad, Sp.An" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit" style="background: var(--secondary); margin-top: 1.2rem;">Daftarkan & Simpan Pasien Baru</button>
+                    </form>
+                </div>
+
+                <div class="dash-card">
+                    <h3><i class="fa-solid fa-hospital-user"></i> Daftar Pasien HCU Aktif</h3>
+                    <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 1rem;">Cari atau klik tombol <strong>"Kelola / Input Data"</strong> untuk menginput perkembangan pasien.</p>
+                    
+                    <!-- BILAH PENCARIAN INSTAN -->
+                    <div class="search-patient-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-patient-input" placeholder="Cari Nama Pasien atau No. RM..." onkeyup="filterActivePatients()">
+                    </div>
+
+                    <div class="patient-table-container">
+                        <table class="patient-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama Pasien</th>
+                                    <th>No. RM</th>
+                                    <th>Dokter DPJP</th>
+                                    <th>Update Terakhir</th>
+                                    <th>Status Vital</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nurse-patient-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DETAIL PASIEN PERAWAT -->
+            <section id="nurse-patient-detail-view" class="view-section">
+                <div class="dashboard-header">
+                    <div>
+                        <h2 id="detail-patient-name">Nama Pasien</h2>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 4px;">
+                            <span style="color: var(--gray-text); font-size: 0.9rem;" id="detail-patient-rm">No. RM: -</span>
+                            <span style="color: var(--primary); font-size: 0.9rem; font-weight: 600;" id="detail-patient-dokter"><i class="fa-solid fa-user-doctor"></i> DPJP: -</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button class="btn-quick-modal" style="background: var(--secondary); color: white; border: none; min-width: auto; padding: 0.5rem 1.1rem; position: relative;" onclick="openNurseChatModal()">
+                            <i class="fa-solid fa-comments"></i> Buka Chat Keluarga
+                            <span id="nurse-chat-unread-badge" style="display: none; position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; width: 12px; height: 12px; border-radius: 50%;"></span>
+                        </button>
+                        <button class="btn-logout" style="background: var(--border-color); color: var(--dark-text);" onclick="showSection('dashboard-nurse-view')">
+                            <i class="fa-solid fa-arrow-left"></i> Kembali ke Daftar Pasien
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dash-card">
+                    <h3><i class="fa-solid fa-pen-to-square"></i> Input Perkembangan & Kelola Status Pasien</h3>
+                    <form onsubmit="handleUpdatePatientData(event)">
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-calendar-days"></i> Hari & Tanggal Input</label>
+                                <input type="date" id="input-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-clock"></i> Jam Input</label>
+                                <input type="time" id="input-time" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-user-clock"></i> Shift Dinas Jaga</label>
+                                <select id="input-shift" required>
+                                    <option value="">-- Pilih Shift Jaga --</option>
+                                    <option value="Pagi">Shift Pagi (07:00 - 14:00 WIB)</option>
+                                    <option value="Sore">Shift Sore (14:00 - 21:00 WIB)</option>
+                                    <option value="Malam">Shift Malam (21:00 - 07:00 WIB)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                            <div class="form-group"><label>TD ( TENSI )</label><input type="text" id="input-td" placeholder="123/99" required></div>
+                            <div class="form-group"><label>HR ( NADI )</label><input type="text" id="input-nadi" placeholder="67" required></div>
+                            <div class="form-group"><label>RR ( NAPAS )</label><input type="text" id="input-rr" placeholder="18" required></div>
+                            <div class="form-group"><label>SpO2</label><input type="text" id="input-spo2" placeholder="98" required></div>
+                            <div class="form-group"><label>S ( SUHU )</label><input type="text" id="input-suhu" placeholder="36.5" required></div>
+                            <div class="form-group"><label>Alat O2</label><input type="text" id="input-o2device" placeholder="Nasal Kanul" required></div>
+                            <div class="form-group"><label>GCS</label><input type="text" id="input-gcs" placeholder="Compos Mentis" required></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Catatan perkembangan perawat shift ini</label>
+                            <textarea id="input-catatan" rows="3" placeholder="Masukkan instruksi obat, progres kondisi, atau pesan untuk keluarga..." required></textarea>
+                        </div>
+
+                        <div class="action-buttons-container">
+                            <div style="flex: 1;">
+                                <button type="submit" class="btn-submit">Simpan & Tambah Log Perkembangan</button>
+                            </div>
+                            
+                            <div class="dropdown-wrapper">
+                                <button type="button" class="btn-danger" onclick="toggleStatusMenu()">
+                                    <i class="fa-solid fa-user-check"></i> Akhiri Perawatan Pasien
+                                </button>
+
+                                <div class="status-menu" id="statusMenu">
+                                    <label for="statusOut">Pilih Status Akhir Pasien:</label>
+                                    <select id="statusOut">
+                                        <option value="">-- Pilih Status --</option>
+                                        <option value="Meninggal">Meninggal</option>
+                                        <option value="APS (Atas Permintaan Sendiri)">APS (Atas Permintaan Sendiri)</option>
+                                        <option value="KRS (Keluar Rumah Sakit)">KRS (Keluar Rumah Sakit)</option>
+                                        <option value="Pindah Ruangan">Pindah Ruangan</option>
+                                        <option value="Lainnya">Lainnya</option>
+                                    </select>
+
+                                    <div style="margin-top: 10px;">
+                                        <label for="customStatusNote">Keterangan / Catatan Tambahan:</label>
+                                        <textarea id="customStatusNote" rows="2" placeholder="Tulis alasan atau ruang tujuan pindah..."></textarea>
+                                    </div>
+
+                                    <div class="menu-actions">
+                                        <button type="button" class="btn-sub btn-cancel" onclick="toggleStatusMenu()">Batal</button>
+                                        <button type="button" class="btn-sub btn-submit-discharge" onclick="handleDischargePatient()">Simpan Status</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="dash-card">
+                    <h3><i class="fa-solid fa-list-check"></i> Log Riwayat Kondisi Pasien</h3>
+                    <div id="nurse-patient-logs"></div>
+                </div>
+            </section>
+
+            <!-- KONTAK & INFORMASI -->
+            <section id="contact-view" class="view-section">
+                <div class="dash-card">
+                    <h2><i class="fa-solid fa-circle-info"></i> Tentang HCU Melati RSUD Bangil</h2>
+                    <p style="line-height: 1.7; color: var(--gray-text); margin-top: 0.5rem;">
+                        <strong>HCU (High Care Unit) Melati</strong> adalah unit pelayanan intensif di RSUD Bangil yang memperuntukkan perawatan pasien dengan kondisi respirasi, hemodinamik, dan sistem kesadaran yang membutuhkan pemantauan khusus secara ketat. Melalui inovasi <em>Smart-Care Connect</em>, kami berkomitmen memberikan akses informasi berkala yang akurat, terpercaya, dan mudah diakses oleh keluarga pasien.
+                    </p>
+                </div>
+
+                <div class="contact-grid">
+                    <div class="dash-card">
+                        <h3><i class="fa-solid fa-location-dot"></i> Alamat & Lokasi</h3>
+                        <p style="font-size: 0.95rem; color: var(--gray-text); line-height: 1.6;">
+                            <strong>RSUD Bangil Kabupaten Pasuruan</strong><br>
+                            Jl. Raya Raci-Bangil, Raci, Kec. Bangil, Pasuruan, Jawa Timur 67153
+                        </p>
+                    </div>
+
+                    <div class="dash-card">
+                        <h3><i class="fa-solid fa-phone"></i> Contact Person & Jaga HCU</h3>
+                        <p style="font-size: 0.95rem; color: var(--gray-text); line-height: 1.8;">
+                            <i class="fa-solid fa-square-phone" style="color: var(--primary);"></i> Telepon Ruang HCU: <strong>(0343) 741123 ext. 204</strong><br>
+                            <i class="fa-brands fa-whatsapp" style="color: var(--success);"></i> WhatsApp Informasi: <strong>+62 812-3456-7890</strong><br>
+                            <i class="fa-solid fa-envelope" style="color: var(--warning);"></i> Email: <strong>hcumelati@rsudbangil.go.id</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="dash-card">
+                    <h3><i class="fa-solid fa-clock"></i> Ketentuan Jam Besuk HCU Melati</h3>
+                    <ul style="padding-left: 20px; color: var(--gray-text); line-height: 1.8; font-size: 0.95rem;">
+                        <li><strong>Siang:</strong> 11.00 WIB - 12.00 WIB</li>
+                        <li>Hanya diperbolehkan 1 (satu) orang penunggu berada dalam ruangan tidak boleh bergantian demi kenyamanan dan pencegahan infeksi.</li>
+                    </ul>
+                </div>
+
+                <button class="btn-back" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i> Kembali Ke Halaman Sebelumnya</button>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- FAB CHAT LINGKARAN DENGAN 4 TOMBOL BULAT -->
+    <div class="fab-chat-wrapper" id="patient-fab-container" style="display: none;">
+        
+        <div class="fab-speed-dial" id="fab-speed-dial">
+            <div class="fab-sub-item" onclick="openModalWithTab('chat')">
+                <div class="fab-sub-btn"><i class="fa-solid fa-comments"></i></div>
+                <span class="fab-sub-label">Chat Petugas</span>
+            </div>
+
+            <div class="fab-sub-item" onclick="openModalWithTab('review')">
+                <div class="fab-sub-btn" style="color: var(--warning); border-color: var(--warning);"><i class="fa-solid fa-star"></i></div>
+                <span class="fab-sub-label">Ulasan Jaga</span>
+            </div>
+
+            <div class="fab-sub-item" onclick="openEduHubSelectionModal()">
+                <div class="fab-sub-btn" style="color: var(--secondary); border-color: var(--secondary);"><i class="fa-solid fa-graduation-cap"></i></div>
+                <span class="fab-sub-label">Smart-EduHub</span>
+            </div>
+
+            <div class="fab-sub-item" onclick="speakPatientStatus()">
+                <div class="fab-sub-btn" id="fab-voice-sub-btn" style="color: var(--purple); border-color: var(--purple);"><i id="fab-voice-sub-icon" class="fa-solid fa-volume-high"></i></div>
+                <span class="fab-sub-label" id="fab-voice-sub-label">Asisten Suara (Baca TTV)</span>
+            </div>
+        </div>
+
+        <div class="fab-main-btn-wrapper">
+            <button class="fab-btn" id="fab-main-btn" onclick="toggleFabMenu()" title="Akses Cepat Layanan">
+                <i class="fa-solid fa-comments"></i>
+            </button>
+            <span class="fab-tooltip" id="fab-tooltip-text">Chat & Ulasan Jaga</span>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP CHAT UNTUK PERAWAT -->
+    <div class="modal-backdrop" id="nurse-chat-modal">
+        <div class="chat-modal-dialog">
+            <i class="fa-solid fa-xmark modal-close" onclick="closeNurseChatModal()"></i>
+            <h3 style="margin-bottom: 0.8rem; color: var(--secondary);"><i class="fa-solid fa-comments"></i> Chat Komunikasi Keluarga Pasien</h3>
+            <div class="chat-box">
+                <div class="chat-messages" id="nurse-chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="nurse-chat-input" placeholder="Kirim balasan pesan ke keluarga pasien..." onkeypress="if(event.key==='Enter') sendNurseMessage()">
+                    <button class="btn-chat-send" style="background: var(--secondary);" onclick="sendNurseMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP CHAT, ULASAN, DAN EDUHUB KELUARGA -->
+    <div class="modal-backdrop" id="patient-chat-review-modal">
+        <div class="chat-modal-dialog">
+            <i class="fa-solid fa-xmark modal-close" onclick="closeChatModal()"></i>
+            
+            <div class="chat-modal-tabs">
+                <button class="chat-tab-btn active" id="modal-tab-chat" onclick="switchModalTab('chat')">
+                    <i class="fa-solid fa-comments"></i> Chat Petugas
+                </button>
+                <button class="chat-tab-btn" id="modal-tab-review" onclick="switchModalTab('review')">
+                    <i class="fa-solid fa-star"></i> Ulasan Jaga
+                </button>
+                <button class="chat-tab-btn" id="modal-tab-eduhub" onclick="switchModalTab('eduhub')">
+                    <i class="fa-solid fa-graduation-cap"></i> Smart-EduHub
+                </button>
+            </div>
+
+            <!-- TAB 1: CHAT PASIEN -->
+            <div id="modal-content-chat">
+                <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 0.8rem;">
+                    Hubungi dan tanyakan langsung kondisi pasien ke petugas jaga HCU:
+                </p>
+                <div class="chat-box">
+                    <div class="chat-messages" id="patient-chat-messages"></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="patient-chat-input" placeholder="Tulis pesan atau pertanyaan..." onkeypress="if(event.key==='Enter') sendPatientMessage()">
+                        <button class="btn-chat-send" onclick="sendPatientMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: PENILAIAN & ULASAN -->
+            <div id="modal-content-review" style="display: none;">
+                <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 0.8rem;">
+                    Bantu kami meningkatkan kualitas pelayanan HCU Melati:
+                </p>
+                
+                <div class="star-rating" id="rating-stars" style="justify-content: center; margin: 1.5rem 0;">
+                    <i class="fa-solid fa-star" onclick="setRating(1)"></i>
+                    <i class="fa-solid fa-star" onclick="setRating(2)"></i>
+                    <i class="fa-solid fa-star" onclick="setRating(3)"></i>
+                    <i class="fa-solid fa-star" onclick="setRating(4)"></i>
+                    <i class="fa-solid fa-star" onclick="setRating(5)"></i>
+                </div>
+
+                <div class="form-group">
+                    <label>Masukan / Saran Anda</label>
+                    <textarea id="rating-feedback-text" rows="3" placeholder="Tuliskan ulasan atau saran pelayanan..."></textarea>
+                </div>
+                <button class="btn-submit" onclick="submitRating()">Kirim Penilaian</button>
+            </div>
+
+            <!-- TAB 3: SMART-EDUHUB MODUL -->
+            <div id="modal-content-eduhub" style="display: none;">
+                <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 1rem;">
+                    Pilih materi panduan perawatan intensif dan istilah medis di bawah ini:
+                </p>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button type="button" class="btn-quick-modal" style="justify-content: flex-start;" onclick="showEduDetail('ttv')">
+                        <i class="fa-solid fa-heart-pulse" style="color: var(--primary);"></i> Memahami Tanda Vital (TTV)
+                    </button>
+                    <button type="button" class="btn-quick-modal" style="justify-content: flex-start;" onclick="showEduDetail('hygiene')">
+                        <i class="fa-solid fa-hands-wash" style="color: var(--secondary);"></i> Kebersihan Tangan & Cegah Infeksi
+                    </button>
+                    <button type="button" class="btn-quick-modal" style="justify-content: flex-start;" onclick="showEduDetail('o2')">
+                        <i class="fa-solid fa-lungs" style="color: var(--success);"></i> Terapi Alat Oksigen
+                    </button>
+                    <button type="button" class="btn-quick-modal" style="justify-content: flex-start;" onclick="showEduDetail('rules')">
+                        <i class="fa-solid fa-shield-cat" style="color: var(--warning);"></i> Etika & Jam Besuk HCU
+                    </button>
+                </div>
+
+                <div id="eduhub-detail-box" style="display: none; margin-top: 1.2rem; background: var(--chat-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); font-size: 0.88rem; line-height: 1.6;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP KEBIJAKAN PRIVASI -->
+    <div class="modal-backdrop" id="privacy-modal">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark modal-close" onclick="closePrivacyModal()"></i>
+            <h2 style="color: var(--primary); margin-bottom: 1rem;"><i class="fa-solid fa-user-shield"></i> Kebijakan & Privasi Pasien</h2>
+            <div style="font-size: 0.9rem; color: var(--gray-text); line-height: 1.7; text-align: justify;">
+                <p style="margin-bottom: 0.8rem;"><strong>1. Kerahasiaan Data Medis:</strong> Seluruh data pasien yang dicatat pada platform <em>HCU Melati Smart Care Connect</em> bersifat rahasia dan dilindungi sesuai dengan etika kedokteran dan peraturan perundang-undangan Rekam Medis di Indonesia.</p>
+                <p style="margin-bottom: 0.8rem;"><strong>2. Hak Akses Terbatas:</strong> Akses data perkembangan vital pasien hanya diperuntukkan bagi keluarga sah yang mendaftarkan No. Rekam Medis (No. RM) resmi serta tim medis jaga RSUD Bangil.</p>
+                <p style="margin-bottom: 0.8rem;"><strong>3. Keamanan Komunikasi:</strong> Fitur ruang obrolan (chat) disediakan khusus untuk mempermudah koordinasi medis dan pembaruan kondisi secara langsung.</p>
+                <p><strong>4. Pembaruan Data:</strong> Petugas perawat menjaga validitas informasi dengan melakukan update kondisi secara berkala.</p>
+            </div>
+            <button class="btn-submit" style="margin-top: 1.5rem;" onclick="closePrivacyModal()">Saya Mengerti & Setuju</button>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP RIWAYAT PASIEN SELESAI -->
+    <div class="modal-backdrop" id="history-modal">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark modal-close" onclick="closeHistoryModal()"></i>
+            <h2 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fa-solid fa-box-archive"></i> Riwayat Pasien Selesai</h2>
+            <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 1.5rem;">Daftar pasien HCU Melati yang perawatan-nya telah diakhiri. Anda dapat melihat detail log lengkap atau mengembalikan statusnya ke pasien aktif.</p>
+            <div id="nurse-history-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            <button class="btn-submit" style="margin-top: 1.5rem; background: var(--gray-text);" onclick="closeHistoryModal()">Tutup</button>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP ULASAN PERAWAT -->
+    <div class="modal-backdrop" id="ratings-modal">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark modal-close" onclick="closeRatingsModal()"></i>
+            <h2 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fa-solid fa-star-half-stroke"></i> Ulasan & Kepuasan Keluarga Pasien</h2>
+            <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 1.5rem;">Daftar penilaian dan respon masukan dari keluarga pasien HCU Melati.</p>
+            <div id="nurse-ratings-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            <button class="btn-submit" style="margin-top: 1.5rem; background: var(--gray-text);" onclick="closeRatingsModal()">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="javascript:void(0)" onclick="showSection('guide-view')">Petunjuk Penggunaan</a>
+            <a href="javascript:void(0)" onclick="openPrivacyModal()">Kebijakan & Privasi</a>
+            <a href="javascript:void(0)" onclick="showSection('contact-view')">Kontak & Hubungi Kami</a>
+            <a href="javascript:void(0)" onclick="showSection('contact-view')">Tentang HCU Melati</a>
+        </div>
+        <p>&copy; HCU Melati Smart Care Connect - RSUD Bangil Pasuruan. All rights reserved.</p>
+    </footer>
+
+    <!-- JavaScript Aplikasi -->
+    <script>
+        // LIST AKUN VALID PERAWAT HCU MELATI
+        const validNurseAccounts = [
+            { id: "hcumelati", pass: "hcumelati2022", name: "Tim Jaga HCU Melati" },
+            { id: "anang", pass: "anang23", name: "Ns. Anang, S.Kep" },
+            { id: "eka lilis", pass: "ekalilis", name: "Ns. Eka Lilis, S.Kep" }
+        ];
+
+        let currentLoggedInNurse = null;
+
+        const themes = [
+            { id: 'light', label: 'Terang', icon: 'fa-solid fa-lightbulb', color: '#f59e0b' },
+            { id: 'dark', label: 'Gelap', icon: 'fa-solid fa-moon', color: '#38bdf8' },
+            { id: 'emerald', label: 'Medis Fresh', icon: 'fa-solid fa-leaf', color: '#10b981' }
+        ];
+
+        let currentThemeIndex = 0;
+
+        function applyTheme(index) {
+            currentThemeIndex = index;
+            const theme = themes[index];
+            document.body.setAttribute('data-theme', theme.id);
+            
+            const iconEl = document.getElementById('theme-icon');
+            const labelEl = document.getElementById('theme-label');
+            
+            if (iconEl && labelEl) {
+                iconEl.className = theme.icon;
+                iconEl.style.color = theme.color;
+                labelEl.innerText = theme.label;
+            }
+            localStorage.setItem('hcu_theme', theme.id);
+            
+            if (activePatient && document.getElementById('dashboard-patient-view').classList.contains('active')) {
+                renderVitalsChart(activePatient.logs || []);
+            }
+        }
+
+        function cycleTheme() {
+            let nextIndex = (currentThemeIndex + 1) % themes.length;
+            applyTheme(nextIndex);
+        }
+
+        /* -------------------------------------------------------------
+           FUNGSI SUARA & POP-UP NOTIFIKASI PESAN MASUK PERAWAT
+        ------------------------------------------------------------- */
+        function playNotificationSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                // Chime Tone 1 (C5 - 523.25 Hz)
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+                gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(ctx.currentTime);
+                osc1.stop(ctx.currentTime + 0.3);
+
+                // Chime Tone 2 (G5 - 783.99 Hz)
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(783.99, ctx.currentTime + 0.15);
+                gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
+                gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(ctx.currentTime + 0.15);
+                osc2.stop(ctx.currentTime + 0.5);
+            } catch (e) {
+                console.log("Audio play error:", e);
+            }
+        }
+
+        function showIncomingChatPopup(senderName, messageText, patientRm) {
+            const isNurseActive = document.getElementById('dashboard-nurse-view').classList.contains('active') || 
+                                  document.getElementById('nurse-patient-detail-view').classList.contains('active');
+
+            if (!isNurseActive) return;
+
+            playNotificationSound();
+
+            let popup = document.getElementById('chat-popup-notif');
+            if (!popup) {
+                popup = document.createElement('div');
+                popup.id = 'chat-popup-notif';
+                popup.style.cssText = `
+                    position: fixed;
+                    top: 25px;
+                    right: 25px;
+                    z-index: 9999;
+                    background: var(--card-bg);
+                    color: var(--dark-text);
+                    border-left: 5px solid var(--primary);
+                    padding: 14px 18px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    max-width: 360px;
+                    animation: slideInRight 0.4s ease-out;
+                    cursor: pointer;
+                    border-top: 1px solid var(--border-color);
+                    border-right: 1px solid var(--border-color);
+                    border-bottom: 1px solid var(--border-color);
+                `;
+                document.body.appendChild(popup);
+            }
+
+            popup.innerHTML = `
+                <div style="background: rgba(2, 132, 199, 0.15); color: var(--primary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <div style="flex: 1; overflow: hidden; text-align: left;">
+                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${senderName}
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--gray-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${messageText}
+                    </div>
+                </div>
+                <button onclick="this.parentElement.remove(); event.stopPropagation();" style="background:none; border:none; color:var(--gray-text); cursor:pointer; font-size: 1rem;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            popup.onclick = () => {
+                popup.remove();
+                if (patientRm) {
+                    const foundIdx = databasePasien.findIndex(p => cleanString(p.rm) === cleanString(patientRm));
+                    if (foundIdx !== -1) {
+                        openPatientDetailView(foundIdx);
+                        openNurseChatModal();
+                    }
+                }
+            };
+
+            setTimeout(() => {
+                if (popup && popup.parentElement) popup.remove();
+            }, 6000);
+        }
+
+        // FUNGSI KONTROL MODAL CHAT PERAWAT
+        function openNurseChatModal(rm = null) {
+            let targetRm = rm;
+            if (!targetRm && currentSelectedPatientIndex !== null) {
+                targetRm = databasePasien[currentSelectedPatientIndex].rm;
+            }
+            if (targetRm) {
+                renderNurseChats(targetRm);
+                document.getElementById('nurse-chat-modal').classList.add('active');
+            }
+        }
+
+        function closeNurseChatModal() {
+            document.getElementById('nurse-chat-modal').classList.remove('active');
+        }
+
+        // FUNGSI NOTIFIKASI TOAST MELAYANG
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-card';
+
+            let iconHtml = '<i class="fa-solid fa-circle-info" style="color:var(--primary);"></i>';
+            if(type === 'success') {
+                toast.style.borderLeftColor = 'var(--success)';
+                iconHtml = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>';
+            } else if(type === 'danger') {
+                toast.style.borderLeftColor = 'var(--danger)';
+                iconHtml = '<i class="fa-solid fa-circle-exclamation" style="color:var(--danger);"></i>';
+            }
+
+            toast.innerHTML = `${iconHtml} <span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('hcu_theme') || 'light';
+            const foundIdx = themes.findIndex(t => t.id === savedTheme);
+            applyTheme(foundIdx !== -1 ? foundIdx : 0);
+
+            // Ambil data bersama dari server saat halaman dibuka.
+            loadDatabaseFromServer();
+        });
+
+        // DATABASE DEFAULT / CACHE
+        const defaultPatients = [
+            {
+                nama: "Siti Aminah",
+                rm: "12345",
+                dokter: "dr. Sugeng, Sp.An",
+                rating: 5,
+                feedback: "Pelayanan sangat ramah dan informasi sangat jelas.",
+                logs: [
+                    {
+                        datetime: "Senin, 10/08/2026 - 16:00 WIB",
+                        shift: "Sore",
+                        td: "120/80",
+                        nadi: "72",
+                        rr: "19",
+                        spo2: "99",
+                        suhu: "36.6",
+                        o2device: "Nasal Kanul",
+                        gcs: "Compos Mentis",
+                        catatan: "Kondisi sangat stabil. Penurunan kebutuhan suplementasi oksigen."
+                    },
+                    {
+                        datetime: "Senin, 10/08/2026 - 08:30 WIB",
+                        shift: "Pagi",
+                        td: "123/99",
+                        nadi: "67",
+                        rr: "18",
+                        spo2: "98",
+                        suhu: "36.5",
+                        o2device: "Nasal Kanul",
+                        gcs: "Compos Mentis",
+                        catatan: "Kondisi stabil, telah dilakukan tindakan nebulizer pagi ini."
+                    }
+                ]
+            }
+        ];
+
+        const defaultChats = {
+            "12345": [
+                { sender: "nurse", text: "Selamat pagi, pasien Ibu Siti Aminah kondisi stabil setelah obat pagi.", time: "07:05 WIB" },
+                { sender: "patient", text: "Terima kasih sus, apakah siang ini boleh diisi air minum?", time: "07:15 WIB" },
+                { sender: "nurse", text: "Boleh bu, sedikit demi sedikit ya.", time: "07:20 WIB" }
+            ]
+        };
+
+        // DATA LOKAL HANYA SEBAGAI CACHE. DATA UTAMA DISINKRONKAN KE SUPABASE.
+        function readLocalJSON(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : fallback;
+            } catch (err) {
+                console.warn('Cache lokal rusak:', key, err);
+                return fallback;
+            }
+        }
+
+        let databasePasien = readLocalJSON('hcu_patients', defaultPatients);
+        let databaseChats = readLocalJSON('hcu_chats', defaultChats);
+        let databaseHistory = readLocalJSON('hcu_history', []);
+        let serverDataLoaded = false;
+        let syncTimer = null;
+        let syncInProgress = false;
+        let realtimeChannel = null;
+        let realtimePollTimer = null;
+        let realtimeStarted = false;
+
+        let activePatient = null;
+        let currentSelectedPatientIndex = null;
+        let selectedRatingValue = 0;
+        let vitalsChartInstance = null;
+        let isFromHistoryView = false;
+
+        let navigationHistory = ['hero-view'];
+
+        // ASISTEN SUARA DENGAN KONFORMASI KONFIRMASI VISUAL & PULSING
+        let synth = window.speechSynthesis;
+        let isSpeakingState = false;
+
+        function updateVoiceUI(speaking) {
+            const mainVoiceBtn = document.getElementById('main-voice-btn');
+            const voiceIcon = document.getElementById('voice-btn-icon');
+            const voiceLabel = document.getElementById('voice-btn-label');
+            const fabSubBtn = document.getElementById('fab-voice-sub-btn');
+            const fabSubIcon = document.getElementById('fab-voice-sub-icon');
+            const fabSubLabel = document.getElementById('fab-voice-sub-label');
+
+            if (speaking) {
+                if (mainVoiceBtn) mainVoiceBtn.classList.add('btn-voice-active');
+                if (voiceIcon) voiceIcon.className = 'fa-solid fa-wave-square fa-spin';
+                if (voiceLabel) voiceLabel.innerText = 'Mengudara (Hentikan)';
+                
+                if (fabSubBtn) fabSubBtn.style.background = 'var(--purple)';
+                if (fabSubBtn) fabSubBtn.style.color = 'white';
+                if (fabSubIcon) fabSubIcon.className = 'fa-solid fa-circle-stop';
+                if (fabSubLabel) fabSubLabel.innerText = 'Hentikan Suara';
+            } else {
+                if (mainVoiceBtn) mainVoiceBtn.classList.remove('btn-voice-active');
+                if (voiceIcon) voiceIcon.className = 'fa-solid fa-volume-high';
+                if (voiceLabel) voiceLabel.innerText = 'Bacakan Laporan';
+
+                if (fabSubBtn) fabSubBtn.style.background = 'var(--card-bg)';
+                if (fabSubBtn) fabSubBtn.style.color = 'var(--purple)';
+                if (fabSubIcon) fabSubIcon.className = 'fa-solid fa-volume-high';
+                if (fabSubLabel) fabSubLabel.innerText = 'Asisten Suara (Baca TTV)';
+            }
+        }
+
+        function speakPatientStatus() {
+            closeFabMenu();
+            
+            if (!activePatient) {
+                showToast("Silakan login keluarga pasien terlebih dahulu!", "danger");
+                return;
+            }
+
+            if (!('speechSynthesis' in window)) {
+                showToast("Browser Anda belum mendukung Text-to-Speech.", "danger");
+                return;
+            }
+
+            if (synth.speaking || isSpeakingState) {
+                synth.cancel();
+                isSpeakingState = false;
+                updateVoiceUI(false);
+                showToast("Pembacaan laporan dihentikan.", "info");
+                return;
+            }
+
+            const logs = activePatient.logs || [];
+            let textToRead = `Laporan perkembangan kondisi pasien ${activePatient.nama}. Dokter Penanggung Jawab: ${activePatient.dokter || 'Belum diisi'}. `;
+
+            if (logs.length > 0) {
+                const latest = logs[0];
+                textToRead += `Pembaruan kondisi shift ${latest.shift}. `;
+                textToRead += `Tekanan darah: ${latest.td || 'tidak ada data'}. `;
+                textToRead += `Nadi: ${latest.nadi || 'tidak ada data'} kali per menit. `;
+                textToRead += `Napas: ${latest.rr || 'tidak ada data'} kali per menit. `;
+                textToRead += `Saturasi Oksigen SpO2: ${latest.spo2 || 'tidak ada data'} persen. `;
+                textToRead += `Suhu tubuh: ${latest.suhu || 'tidak ada data'} derajat celsius. `;
+                textToRead += `Alat oksigen: ${latest.o2device || 'tanpa alat'}. `;
+                textToRead += `Tingkat kesadaran GCS: ${latest.gcs || 'tidak ada data'}. `;
+                textToRead += `Catatan perawat: ${latest.catatan}.`;
+            } else {
+                textToRead += `Belum ada catatan perkembangan Tanda Vital yang diinput oleh perawat jaga HCU.`;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textToRead);
+            utterance.lang = 'id-ID';
+            utterance.rate = 0.95; 
+            utterance.pitch = 1.0;
+
+            utterance.onstart = () => {
+                isSpeakingState = true;
+                updateVoiceUI(true);
+                showToast("Membacakan laporan perkembangan pasien...", "success");
+            };
+
+            utterance.onend = () => {
+                isSpeakingState = false;
+                updateVoiceUI(false);
+            };
+
+            utterance.onerror = () => {
+                isSpeakingState = false;
+                updateVoiceUI(false);
+            };
+
+            synth.speak(utterance);
+        }
+
+        // TOGGLE SPEED DIAL 4 BULAT FAB
+        function toggleFabMenu() {
+            const dial = document.getElementById('fab-speed-dial');
+            const mainBtn = document.getElementById('fab-main-btn');
+            const tooltip = document.getElementById('fab-tooltip-text');
+
+            if (dial.classList.contains('active')) {
+                dial.classList.remove('active');
+                mainBtn.classList.remove('active-open');
+                tooltip.style.display = 'block';
+            } else {
+                dial.classList.add('active');
+                mainBtn.classList.add('active-open');
+                tooltip.style.display = 'none';
+            }
+        }
+
+        function closeFabMenu() {
+            const dial = document.getElementById('fab-speed-dial');
+            const mainBtn = document.getElementById('fab-main-btn');
+            const tooltip = document.getElementById('fab-tooltip-text');
+            dial.classList.remove('active');
+            mainBtn.classList.remove('active-open');
+            tooltip.style.display = 'block';
+        }
+
+        function openModalWithTab(tabName) {
+            closeFabMenu();
+            switchModalTab(tabName);
+            document.getElementById('patient-chat-review-modal').classList.add('active');
+        }
+
+        function openEduHubSelectionModal() { openModalWithTab('eduhub'); }
+        function closeChatModal() { document.getElementById('patient-chat-review-modal').classList.remove('active'); }
+
+        function switchModalTab(tabType) {
+            const btnChat = document.getElementById('modal-tab-chat');
+            const btnReview = document.getElementById('modal-tab-review');
+            const btnEdu = document.getElementById('modal-tab-eduhub');
+
+            const contentChat = document.getElementById('modal-content-chat');
+            const contentReview = document.getElementById('modal-content-review');
+            const contentEdu = document.getElementById('modal-content-eduhub');
+
+            btnChat.classList.remove('active');
+            btnReview.classList.remove('active');
+            btnEdu.classList.remove('active');
+
+            contentChat.style.display = 'none';
+            contentReview.style.display = 'none';
+            contentEdu.style.display = 'none';
+
+            if (tabType === 'chat') {
+                btnChat.classList.add('active');
+                contentChat.style.display = 'block';
+                renderPatientChats();
+            } else if (tabType === 'review') {
+                btnReview.classList.add('active');
+                contentReview.style.display = 'block';
+            } else if (tabType === 'eduhub') {
+                btnEdu.classList.add('active');
+                contentEdu.style.display = 'block';
+            }
+        }
+
+        function showEduDetail(topic) {
+            const box = document.getElementById('eduhub-detail-box');
+            box.style.display = 'block';
+
+            if (topic === 'ttv') {
+                box.innerHTML = `
+                    <strong style="color:var(--primary);"><i class="fa-solid fa-heart-pulse"></i> Tanda Vital (TTV) Pasien:</strong><br>
+                    • <strong>TD (Tensi):</strong> Normal ~ 120/80 mmHg.<br>
+                    • <strong>Nadi (HR):</strong> Normal 60 - 100x / menit.<br>
+                    • <strong>Respirasi (RR):</strong> Normal 12 - 20x / menit.<br>
+                    • <strong>SpO2:</strong> Ideal > 95%.<br>
+                    • <strong>GCS:</strong> Nilai 15 berarti sadar penuh (Compos Mentis).
+                `;
+            } else if (topic === 'hygiene') {
+                box.innerHTML = `
+                    <strong style="color:var(--secondary);"><i class="fa-solid fa-hands-wash"></i> Kebersihan & Infeksi:</strong><br>
+                    • Gunakan <em>handrub</em> alkohol sebelum dan sesudah menyentuh area rawat.<br>
+                    • Wajib mengenakan masker medis standar saat memasuki ruang HCU.
+                `;
+            } else if (topic === 'o2') {
+                box.innerHTML = `
+                    <strong style="color:var(--success);"><i class="fa-solid fa-lungs"></i> Terapi Oksigen:</strong><br>
+                    • <strong>Nasal Kanul:</strong> Selang hidung ringan.<br>
+                    • <strong>Masker NRM:</strong> Kebutuhan oksigen konsentrasi tinggi.<br>
+                    • <strong>Nebulizer:</strong> Penguapan obat pelancar jalan napas.
+                `;
+            } else if (topic === 'rules') {
+                box.innerHTML = `
+                    <strong style="color:var(--warning);"><i class="fa-solid fa-shield-cat"></i> Jam Besuk & Etika:</strong><br>
+                    • <strong>Siang:</strong> 11.00 - 12.00 WIB | <strong>Sore:</strong> 16.00 - 17.00 WIB.<br>
+                    • Maksimal 1 (satu) penunggu secara bergantian di dalam ruangan.
+                `;
+            }
+        }
+
+        // CHART RINGKAS TTV
+        function renderVitalsChart(logs) {
+            const ctx = document.getElementById('patient-vitals-chart');
+            if (!ctx) return;
+
+            if (vitalsChartInstance) vitalsChartInstance.destroy();
+            if (!logs || logs.length === 0) return;
+
+            const sortedLogs = [...logs].reverse();
+            const labels = sortedLogs.map(l => {
+                const parts = l.datetime.split('-');
+                return parts.length > 1 ? parts[1].trim() : l.datetime;
+            });
+
+            const dataTensiSys = sortedLogs.map(l => parseInt((l.td || '').split('/')[0]) || null);
+            const dataNadi = sortedLogs.map(l => parseInt(l.nadi) || null);
+            const dataSpO2 = sortedLogs.map(l => parseInt(l.spo2) || null);
+
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+            vitalsChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Tensi Sistolik', data: dataTensiSys, borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.1)', borderWidth: 2, tension: 0.3, fill: true },
+                        { label: 'Nadi (HR)', data: dataNadi, borderColor: '#0d9488', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3 },
+                        { label: 'SpO2 (%)', data: dataSpO2, borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4, 4], tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: textColor, font: { family: 'Poppins', size: 10 } } } },
+                    scales: {
+                        x: { ticks: { color: textColor, font: { family: 'Poppins', size: 9 } }, grid: { color: gridColor } },
+                        y: { ticks: { color: textColor, font: { family: 'Poppins', size: 9 } }, grid: { color: gridColor }, suggestedMin: 50, suggestedMax: 140 }
+                    }
+                }
+            });
+        }
+
+        function switchGuideTab(role) {
+            const btnPatient = document.getElementById('tab-btn-patient');
+            const btnNurse = document.getElementById('tab-btn-nurse');
+            const contentPatient = document.getElementById('guide-patient-content');
+            const contentNurse = document.getElementById('guide-nurse-content');
+
+            if (role === 'patient') {
+                btnPatient.className = 'guide-tab-btn active-patient';
+                btnNurse.className = 'guide-tab-btn';
+                contentPatient.style.display = 'block';
+                contentNurse.style.display = 'none';
+            } else {
+                btnNurse.className = 'guide-tab-btn active-nurse';
+                btnPatient.className = 'guide-tab-btn';
+                contentNurse.style.display = 'block';
+                contentPatient.style.display = 'none';
+            }
+        }
+
+        function setDefaultDateTimeInput() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            const dateInput = document.getElementById('input-date');
+            const timeInput = document.getElementById('input-time');
+
+            if (dateInput) dateInput.value = `${year}-${month}-${day}`;
+            if (timeInput) timeInput.value = `${hours}:${minutes}`;
+        }
+
+        // =========================================================
+        // PENYIMPANAN DATA: CACHE LOKAL + SUPABASE (CROSS-DEVICE)
+        // =========================================================
+        let pendingSync = false;
+
+        function cacheDatabaseLocally() {
+            localStorage.setItem('hcu_patients', JSON.stringify(databasePasien));
+            localStorage.setItem('hcu_chats', JSON.stringify(databaseChats));
+            localStorage.setItem('hcu_history', JSON.stringify(databaseHistory));
+        }
+
+        function saveDatabaseToStorage() {
+            // Cache lokal hanya sebagai cadangan/offline. Database utama adalah Supabase.
+            cacheDatabaseLocally();
+            pendingSync = true;
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(() => { syncDatabaseToServer(); }, 300);
+        }
+
+        async function syncDatabaseToServer() {
+            if (!supabaseClient) {
+                console.warn('Supabase belum dikonfigurasi. Data masih tersimpan di perangkat ini saja.');
+                return false;
+            }
+            if (syncInProgress) {
+                clearTimeout(syncTimer);
+                syncTimer = setTimeout(() => syncDatabaseToServer(), 500);
+                return false;
+            }
+
+            syncInProgress = true;
+            try {
+                const payload = {
+                    id: 1,
+                    patients: databasePasien,
+                    chats: databaseChats,
+                    history: databaseHistory,
+                    updated_at: new Date().toISOString()
+                };
+
+                const { error } = await supabaseClient
+                    .from('hcu_state')
+                    .upsert(payload, { onConflict: 'id' });
+
+                if (error) throw error;
+                pendingSync = false;
+                serverDataLoaded = true;
+                return true;
+            } catch (error) {
+                console.error('Sinkronisasi Supabase gagal:', error);
+                showToast('Data lokal tersimpan, tetapi belum tersinkron ke server.', 'danger');
+                return false;
+            } finally {
+                syncInProgress = false;
+            }
+        }
+
+        // =========================================================
+        // REALTIME CHAT / DATA SYNC
+        // Supabase Realtime akan mengirim perubahan dari perangkat lain
+        // tanpa perlu refresh atau logout. Polling 5 detik menjadi fallback
+        // apabila Realtime belum aktif di project Supabase.
+        // =========================================================
+        function applyServerState(data) {
+            if (!data) return;
+
+            databasePasien = Array.isArray(data.patients) ? data.patients : [];
+            databaseChats = data.chats && typeof data.chats === 'object' ? data.chats : {};
+            databaseHistory = Array.isArray(data.history) ? data.history : [];
+            cacheDatabaseLocally();
+            serverDataLoaded = true;
+
+            // Pertahankan pasien yang sedang dibuka dengan versi terbaru.
+            if (activePatient && activePatient.rm) {
+                const rm = cleanString(activePatient.rm);
+                const latest = databasePasien.find(p => cleanString(p.rm) === rm);
+                const history = databaseHistory.find(p => cleanString(p.rm) === rm);
+                if (latest || history) {
+                    activePatient = latest || history;
+                }
+            }
+
+            // Update tampilan chat jika modal/chat sedang terbuka.
+            const patientChatModal = document.getElementById('patient-chat-review-modal');
+            if (activePatient && patientChatModal && patientChatModal.classList.contains('active')) {
+                renderPatientChats();
+            }
+
+            const nurseChatModal = document.getElementById('nurse-chat-modal');
+            if (nurseChatModal && nurseChatModal.classList.contains('active') && currentSelectedPatientIndex !== null) {
+                const p = databasePasien[currentSelectedPatientIndex];
+                if (p) renderNurseChats(p.rm);
+            }
+
+            if (document.getElementById('nurse-patient-table-body')) {
+                renderNursePatientTable();
+            }
+
+            // Perbarui dashboard pasien/TTV jika sedang dibuka.
+            if (activePatient && document.getElementById('dashboard-patient-view')?.classList.contains('active')) {
+                renderPatientDashboard();
+            }
+        }
+
+        async function refreshRealtimeState() {
+            if (!supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('hcu_state')
+                    .select('id, patients, chats, history, updated_at')
+                    .eq('id', 1)
+                    .maybeSingle();
+                if (error) throw error;
+                if (data) applyServerState(data);
+            } catch (error) {
+                console.warn('Refresh sinkronisasi realtime gagal:', error);
+            }
+        }
+
+        function startRealtimeSync() {
+            if (!supabaseClient || realtimeStarted) return;
+            realtimeStarted = true;
+
+            realtimeChannel = supabaseClient
+                .channel('hcu-state-realtime')
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'hcu_state', filter: 'id=eq.1' },
+                    (payload) => {
+                        if (payload.eventType === 'DELETE') return;
+                        if (payload.new) {
+                            applyServerState(payload.new);
+                        }
+                    }
+                )
+                .subscribe((status) => {
+                    console.log('Supabase Realtime:', status);
+                    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                        // Fallback polling tetap berjalan agar chat tidak perlu refresh.
+                        refreshRealtimeState();
+                    }
+                });
+
+            // Fallback: cek perubahan server berkala. Jika Realtime aktif,
+            // query ini tetap ringan dan memastikan browser tidak tertinggal.
+            clearInterval(realtimePollTimer);
+            realtimePollTimer = setInterval(refreshRealtimeState, 5000);
+        }
+
+        async function loadDatabaseFromServer() {
+            if (!supabaseClient) {
+                console.warn('Supabase belum dikonfigurasi. Menggunakan cache lokal.');
+                renderNursePatientTable();
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('hcu_state')
+                    .select('id, patients, chats, history, updated_at')
+                    .eq('id', 1)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (data) {
+                    databasePasien = Array.isArray(data.patients) ? data.patients : [];
+                    databaseChats = data.chats && typeof data.chats === 'object' ? data.chats : {};
+                    databaseHistory = Array.isArray(data.history) ? data.history : [];
+                    cacheDatabaseLocally();
+                    serverDataLoaded = true;
+                    console.log('Data HCU berhasil dimuat dari Supabase:', data.updated_at || '-');
+                } else {
+                    // Database online masih kosong: jadikan data perangkat pertama sebagai data awal bersama.
+                    cacheDatabaseLocally();
+                    await syncDatabaseToServer();
+                }
+
+                if (document.getElementById('nurse-patient-table-body')) renderNursePatientTable();
+                if (activePatient) {
+                    const latest = databasePasien.find(p => cleanString(p.rm) === cleanString(activePatient.rm));
+                    const history = databaseHistory.find(p => cleanString(p.rm) === cleanString(activePatient.rm));
+                    if (latest || history) {
+                        activePatient = latest || history;
+                        renderPatientDashboard();
+                    }
+                }
+            } catch (error) {
+                console.warn('Supabase belum dapat diakses. Menggunakan cache lokal:', error);
+                renderNursePatientTable();
+            }
+
+            // Mulai listener setelah koneksi database tersedia.
+            startRealtimeSync();
+        }
+
+        function cleanString(str) {
+            if(!str) return '';
+            return str.toString().trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function showSection(sectionId, isBacking = false) {
+            const currentSection = navigationHistory[navigationHistory.length - 1];
+            
+            if (!isBacking && currentSection !== sectionId) {
+                navigationHistory.push(sectionId);
+            }
+
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            const targetSection = document.getElementById(sectionId);
+            targetSection.classList.add('active');
+            
+            const fabContainer = document.getElementById('patient-fab-container');
+            if (sectionId === 'dashboard-patient-view') {
+                fabContainer.style.display = 'flex';
+            } else {
+                fabContainer.style.display = 'none';
+            }
+
+            if(sectionId === 'hero-view') {
+                document.querySelectorAll('.hero-animate').forEach(el => {
+                    el.style.animation = 'none';
+                    el.offsetHeight;
+                    el.style.animation = null;
+                });
+            }
+
+            if(sectionId === 'dashboard-nurse-view') {
+                renderNursePatientTable();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goBack() {
+            if (synth && synth.speaking) {
+                synth.cancel();
+                updateVoiceUI(false);
+            }
+
+            if (navigationHistory.length > 1) {
+                navigationHistory.pop();
+                const previousSection = navigationHistory[navigationHistory.length - 1];
+                showSection(previousSection, true);
+            } else {
+                showSection('hero-view', true);
+            }
+        }
+
+        function handlePatientDashBack() {
+            if (synth && synth.speaking) {
+                synth.cancel();
+                updateVoiceUI(false);
+            }
+
+            if (isFromHistoryView) {
+                isFromHistoryView = false;
+                goBack(); 
+                openHistoryModal();
+            } else {
+                goBack();
+            }
+        }
+
+        function openPrivacyModal() { document.getElementById('privacy-modal').classList.add('active'); }
+        function closePrivacyModal() { document.getElementById('privacy-modal').classList.remove('active'); }
+
+        function openHistoryModal() {
+            renderNurseHistory();
+            document.getElementById('history-modal').classList.add('active');
+        }
+        function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); }
+
+        function openRatingsModal() {
+            renderNurseRatings();
+            document.getElementById('ratings-modal').classList.add('active');
+        }
+        function closeRatingsModal() { document.getElementById('ratings-modal').classList.remove('active'); }
+
+        function handlePatientLogin(e) {
+            e.preventDefault();
+            const nameInput = cleanString(document.getElementById('patient-name-input').value);
+            const rmInput = cleanString(document.getElementById('patient-rm-input').value);
+
+            const foundActive = databasePasien.find(p => cleanString(p.nama) === nameInput && cleanString(p.rm) === rmInput);
+            const foundHistory = databaseHistory.find(p => cleanString(p.nama) === nameInput && cleanString(p.rm) === rmInput);
+
+            if (foundActive) {
+                isFromHistoryView = false;
+                activePatient = foundActive;
+                renderPatientDashboard();
+                showSection('dashboard-patient-view');
+                showToast(`Selamat datang keluarga ${foundActive.nama}!`, 'success');
+            } else if (foundHistory) {
+                isFromHistoryView = false;
+                activePatient = foundHistory;
+                renderPatientDashboard();
+                showSection('dashboard-patient-view');
+                showToast(`Membuka riwayat data pasien ${foundHistory.nama}`, 'info');
+            } else {
+                showToast('Data Pasien & No. RM tidak ditemukan!', 'danger');
+            }
+        }
+
+        function renderPatientDashboard() {
+            if (!activePatient) return;
+            document.getElementById('dash-patient-name').innerText = activePatient.nama;
+            document.getElementById('dash-patient-rm').innerText = 'No. RM: ' + activePatient.rm;
+            document.getElementById('dash-patient-dokter').innerHTML = '<i class="fa-solid fa-user-doctor"></i> DPJP: ' + (activePatient.dokter || '-');
+
+            const logs = activePatient.logs || [];
+            
+            if(logs.length > 0) {
+                const latest = logs[0];
+                document.getElementById('v-td').innerText = latest.td || '-';
+                document.getElementById('v-nadi').innerText = latest.nadi || '-';
+                document.getElementById('v-rr').innerText = latest.rr || '-';
+                document.getElementById('v-spo2').innerText = latest.spo2 || '-';
+                document.getElementById('v-suhu').innerText = latest.suhu || '-';
+                document.getElementById('v-o2device').innerText = latest.o2device || '-';
+                document.getElementById('v-gcs').innerText = latest.gcs || '-';
+            } else {
+                document.getElementById('v-td').innerText = "-";
+                document.getElementById('v-nadi').innerText = "-";
+                document.getElementById('v-rr').innerText = "-";
+                document.getElementById('v-spo2').innerText = "-";
+                document.getElementById('v-suhu').innerText = "-";
+                document.getElementById('v-o2device').innerText = "-";
+                document.getElementById('v-gcs').innerText = "-";
+            }
+
+            renderVitalsChart(logs);
+            renderLogsTimeline('patient-logs-timeline', logs);
+            setRating(activePatient.rating || 0);
+            document.getElementById('rating-feedback-text').value = activePatient.feedback || '';
+        }
+
+        function renderLogsTimeline(containerId, logs) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if(!logs || logs.length === 0) {
+                container.innerHTML = '<div style="color: var(--gray-text); font-size: 0.9rem; font-style: italic;">Belum ada catatan perkembangan pasien yang diinput oleh perawat.</div>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const shiftClass = log.shift.toLowerCase() === 'pagi' ? 'shift-pagi' : (log.shift.toLowerCase() === 'sore' ? 'shift-sore' : 'shift-malam');
+
+                container.innerHTML += `
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div class="timeline-time"><i class="fa-solid fa-clock"></i> ${log.datetime}</div>
+                            <span class="shift-badge ${shiftClass}">Shift ${log.shift}</span>
+                        </div>
+                        <div class="timeline-vitals-vertical">
+                            <div class="vital-row-item"><span class="vital-label">TD</span><span class="vital-value">= ${log.td || '-'}</span></div>
+                            <div class="vital-row-item"><span class="vital-label">HR</span><span class="vital-value">= ${log.nadi || '-'}</span></div>
+                            <div class="vital-row-item"><span class="vital-label">RR</span><span class="vital-value">= ${log.rr || '-'}</span></div>
+                            <div class="vital-row-item"><span class="vital-label">S</span><span class="vital-value">= ${log.suhu || '-'}</span></div>
+                            <div class="vital-row-item"><span class="vital-label">SpO2</span><span class="vital-value">= ${log.spo2 || '-'}</span></div>
+                            <div class="vital-row-item"><span class="vital-label">Alat O2</span><span class="vital-value">= ${log.o2device || '-'}</span></div>
+                            <div class="vital-row-item"><span class="vital-label">GCS</span><span class="vital-value">= ${log.gcs || '-'}</span></div>
+                        </div>
+                        <div class="timeline-note-box">
+                            <strong><i class="fa-solid fa-clipboard-user"></i> Keterangan / Catatan:</strong><br>
+                            ${log.catatan}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderPatientChats() {
+            const container = document.getElementById('patient-chat-messages');
+            container.innerHTML = '';
+            
+            const chatList = databaseChats[activePatient.rm] || [];
+            if(chatList.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color: var(--gray-text); margin-top:2rem;">Belum ada pesan. Tulis pesan di bawah untuk menghubungi perawat.</div>`;
+                return;
+            }
+
+            chatList.forEach(c => {
+                const isMe = c.sender === 'patient';
+                container.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
+                        ${c.text}
+                        <span class="meta">${isMe ? 'Anda' : 'Perawat HCU'} • ${c.time}</span>
+                    </div>
+                `;
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendPatientMessage() {
+            const input = document.getElementById('patient-chat-input');
+            const text = input.value.trim();
+            if(!text || !activePatient) return;
+
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} WIB`;
+
+            if(!databaseChats[activePatient.rm]) databaseChats[activePatient.rm] = [];
+
+            databaseChats[activePatient.rm].push({
+                sender: 'patient',
+                text: text,
+                time: timeStr
+            });
+
+            saveDatabaseToStorage();
+            input.value = '';
+            renderPatientChats();
+
+            showIncomingChatPopup(
+                `Keluarga ${activePatient.nama} (RM: ${activePatient.rm})`,
+                text,
+                activePatient.rm
+            );
+
+            if (document.getElementById('dashboard-nurse-view').classList.contains('active')) {
+                renderNursePatientTable();
+            }
+        }
+
+        function setRating(val) {
+            selectedRatingValue = val;
+            const stars = document.querySelectorAll('#rating-stars i');
+            stars.forEach((s, idx) => {
+                if (idx < val) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+        }
+
+        function submitRating() {
+            if(!activePatient) return;
+            if(selectedRatingValue === 0) {
+                showToast('Silakan pilih jumlah bintang ulasan!', 'danger');
+                return;
+            }
+            
+            activePatient.rating = selectedRatingValue;
+            activePatient.feedback = document.getElementById('rating-feedback-text').value.trim();
+
+            saveDatabaseToStorage();
+            showToast('Ulasan dan masukan Anda berhasil dikirim.', 'success');
+        }
+
+        // AKUN LOGINKAN MULTI-PERAWAT DENGAN VERIFIKASI ARRAY
+        function handleNurseLogin(e) {
+            e.preventDefault();
+            const idInput = cleanString(document.getElementById('nurse-id').value);
+            const passInput = document.getElementById('nurse-pass').value.trim();
+
+            const foundAccount = validNurseAccounts.find(acc => cleanString(acc.id) === idInput && acc.pass === passInput);
+
+            if (foundAccount) {
+                currentLoggedInNurse = foundAccount;
+                document.getElementById('logged-nurse-label').innerHTML = `<span class="live-dot"></span> Petugas Jaga: <strong>${foundAccount.name}</strong>`;
+                showSection('dashboard-nurse-view');
+                showToast(`Selamat bertugas, ${foundAccount.name}!`, "success");
+            } else {
+                showToast("NIP / ID atau Kata Sandi perawat salah!", "danger");
+            }
+        }
+
+        function handleRegisterPatient(e) {
+            e.preventDefault();
+            const newName = document.getElementById('reg-name').value.trim();
+            const newRm = document.getElementById('reg-rm').value.trim();
+            const newDokter = document.getElementById('reg-dokter').value.trim();
+
+            if (!newName || !newRm || !newDokter) return;
+
+            if (databasePasien.some(p => cleanString(p.rm) === cleanString(newRm))) {
+                showToast(`No. RM (${newRm}) sudah terdaftar!`, 'danger');
+                return;
+            }
+
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} WIB`;
+
+            const newPatient = {
+                nama: newName,
+                rm: newRm,
+                dokter: newDokter,
+                rating: 0,
+                feedback: "",
+                logs: []
+            };
+
+            databasePasien.push(newPatient);
+            databaseChats[newRm] = [
+                { sender: "nurse", text: `Selamat datang di HCU Melati Smart Connect. Akun keluarga untuk pasien ${newName} (DPJP: ${newDokter}) telah aktif.`, time: timeStr }
+            ];
+
+            saveDatabaseToStorage();
+            showToast(`Pasien ${newName} berhasil didaftarkan!`, 'success');
+            
+            document.getElementById('reg-name').value = '';
+            document.getElementById('reg-rm').value = '';
+            document.getElementById('reg-dokter').value = '';
+
+            renderNursePatientTable();
+        }
+
+        // PENCARIAN INSTAN TABEL PASIEN
+        function filterActivePatients() {
+            const query = cleanString(document.getElementById('search-patient-input').value);
+            const rows = document.querySelectorAll('#nurse-patient-table-body tr');
+
+            rows.forEach(row => {
+                const text = cleanString(row.innerText);
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function renderNursePatientTable() {
+            const tableBody = document.getElementById('nurse-patient-table-body');
+            tableBody.innerHTML = '';
+
+            if (databasePasien.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--gray-text);">Belum ada pasien HCU aktif. Silakan daftarkan pasien baru di atas.</td></tr>`;
+                return;
+            }
+
+            databasePasien.forEach((p, index) => {
+                const latestLog = p.logs && p.logs.length > 0 ? p.logs[0] : null;
+                const updateTime = latestLog ? latestLog.datetime : 'Belum ada input';
+                const statusVital = latestLog ? `TD: ${latestLog.td} | HR: ${latestLog.nadi} | SpO2: ${latestLog.spo2}` : 'Belum diisi TTV';
+
+                const chats = databaseChats[p.rm] || [];
+                const hasUnreadFromPatient = chats.length > 0 && chats[chats.length - 1].sender === 'patient';
+                const notifBadgeHtml = hasUnreadFromPatient ? `<span class="chat-notif-badge"><i class="fa-solid fa-bell"></i> Pesan Baru</span>` : '';
+
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${p.nama}</strong> ${notifBadgeHtml}</td>
+                        <td>${p.rm}</td>
+                        <td>${p.dokter || '-'}</td>
+                        <td><small>${updateTime}</small></td>
+                        <td><small>${statusVital}</small></td>
+                        <td>
+                            <button class="btn-action-table" onclick="openPatientDetailView(${index})">
+                                <i class="fa-solid fa-folder-open"></i> Kelola / Input Data
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openPatientDetailView(idx) {
+            currentSelectedPatientIndex = idx;
+            const p = databasePasien[idx];
+            if(!p) return;
+
+            document.getElementById('detail-patient-name').innerText = p.nama;
+            document.getElementById('detail-patient-rm').innerText = 'No. RM: ' + p.rm;
+            document.getElementById('detail-patient-dokter').innerHTML = '<i class="fa-solid fa-user-doctor"></i> DPJP: ' + (p.dokter || '-');
+
+            const chats = databaseChats[p.rm] || [];
+            const hasUnreadFromPatient = chats.length > 0 && chats[chats.length - 1].sender === 'patient';
+            const badgeEl = document.getElementById('nurse-chat-unread-badge');
+            if(badgeEl) badgeEl.style.display = hasUnreadFromPatient ? 'block' : 'none';
+
+            const logs = p.logs || [];
+
+            clearNurseForm();
+            setDefaultDateTimeInput();
+
+            renderLogsTimeline('nurse-patient-logs', logs);
+
+            showSection('nurse-patient-detail-view');
+        }
+
+        function clearNurseForm() {
+            document.getElementById('input-shift').value = '';
+            document.getElementById('input-td').value = '';
+            document.getElementById('input-nadi').value = '';
+            document.getElementById('input-rr').value = '';
+            document.getElementById('input-spo2').value = '';
+            document.getElementById('input-suhu').value = '';
+            document.getElementById('input-o2device').value = '';
+            document.getElementById('input-gcs').value = '';
+            document.getElementById('input-catatan').value = '';
+            document.getElementById('statusOut').value = '';
+            document.getElementById('customStatusNote').value = '';
+        }
+
+        function renderNurseChats(rm) {
+            const container = document.getElementById('nurse-chat-messages');
+            if(!rm) {
+                container.innerHTML = `<div style="text-align: center; color: var(--gray-text); margin-top: 2rem;">Pilih pasien untuk membuka ruang chat.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            const chatList = databaseChats[rm] || [];
+
+            if(chatList.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: var(--gray-text); margin-top: 2rem;">Belum ada obrolan dengan pasien ini.</div>`;
+                return;
+            }
+
+            chatList.forEach(c => {
+                const isMe = c.sender === 'nurse';
+                container.innerHTML += `
+                    <div class="chat-message ${isMe ? 'sent' : 'received'}" style="${isMe ? 'background-color: var(--secondary);' : ''}">
+                        ${c.text}
+                        <span class="meta">${isMe ? 'Anda (Perawat)' : 'Keluarga Pasien'} • ${c.time}</span>
+                    </div>
+                `;
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendNurseMessage() {
+            if(currentSelectedPatientIndex === null) return;
+
+            const p = databasePasien[currentSelectedPatientIndex];
+            const input = document.getElementById('nurse-chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} WIB`;
+
+            if(!databaseChats[p.rm]) databaseChats[p.rm] = [];
+
+            databaseChats[p.rm].push({
+                sender: 'nurse',
+                text: text,
+                time: timeStr
+            });
+
+            saveDatabaseToStorage();
+            input.value = '';
+            renderNurseChats(p.rm);
+
+            const badgeEl = document.getElementById('nurse-chat-unread-badge');
+            if(badgeEl) badgeEl.style.display = 'none';
+        }
+
+        function handleUpdatePatientData(e) {
+            e.preventDefault();
+            if (currentSelectedPatientIndex === null) return;
+
+            const selectedShift = document.getElementById('input-shift').value;
+            if (!selectedShift) {
+                showToast("Silakan pilih Shift Jaga Perawat!", "danger");
+                return;
+            }
+
+            const rawDate = document.getElementById('input-date').value;
+            const rawTime = document.getElementById('input-time').value;
+
+            if(!rawDate || !rawTime) {
+                showToast("Silakan isi Hari, Tanggal, dan Jam!", "danger");
+                return;
+            }
+
+            const d = new Date(rawDate + 'T' + rawTime);
+            const daysArr = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const dayName = daysArr[d.getDay()];
+            const formattedDate = `${dayName}, ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} - ${rawTime} WIB`;
+
+            const newLog = {
+                datetime: formattedDate,
+                shift: selectedShift,
+                td: document.getElementById('input-td').value.trim(),
+                nadi: document.getElementById('input-nadi').value.trim(),
+                rr: document.getElementById('input-rr').value.trim(),
+                spo2: document.getElementById('input-spo2').value.trim(),
+                suhu: document.getElementById('input-suhu').value.trim(),
+                o2device: document.getElementById('input-o2device').value.trim(),
+                gcs: document.getElementById('input-gcs').value.trim(),
+                catatan: document.getElementById('input-catatan').value.trim()
+            };
+
+            if(!databasePasien[currentSelectedPatientIndex].logs) databasePasien[currentSelectedPatientIndex].logs = [];
+
+            databasePasien[currentSelectedPatientIndex].logs.unshift(newLog);
+
+            saveDatabaseToStorage();
+            showToast(`Log TTV ${databasePasien[currentSelectedPatientIndex].nama} berhasil disimpan!`, 'success');
+
+            clearNurseForm();
+            setDefaultDateTimeInput();
+
+            renderLogsTimeline('nurse-patient-logs', databasePasien[currentSelectedPatientIndex].logs);
+        }
+
+        function toggleStatusMenu() {
+            const menu = document.getElementById('statusMenu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function handleDischargePatient() {
+            if (currentSelectedPatientIndex === null) return;
+
+            const selectedStatus = document.getElementById('statusOut').value;
+            const customNote = document.getElementById('customStatusNote').value.trim();
+
+            if (!selectedStatus && !customNote) {
+                showToast("Silakan pilih Status Akhir atau Catatan!", "danger");
+                return;
+            }
+
+            const finalStatusText = selectedStatus ? selectedStatus : "Keterangan Manual";
+            const patient = databasePasien[currentSelectedPatientIndex];
+
+            const confirmDischarge = confirm(`Konfirmasi Pengakhiran Perawatan:\n\nNama: ${patient.nama}\nNo. RM: ${patient.rm}\nDPJP: ${patient.dokter || '-'}\nStatus Akhir: ${finalStatusText}\nCatatan: ${customNote || '-'}\n\nYakin ingin memindahkan pasien ini ke Riwayat?`);
+
+            if (confirmDischarge) {
+                const now = new Date();
+                const dischargeDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} WIB`;
+
+                const dischargedPatient = {
+                    ...patient,
+                    dischargeDate: dischargeDate,
+                    status: finalStatusText,
+                    dischargeNote: customNote
+                };
+
+                databaseHistory.unshift(dischargedPatient);
+                databasePasien.splice(currentSelectedPatientIndex, 1);
+
+                saveDatabaseToStorage();
+                showToast(`Perawatan ${patient.nama} diakhiri (${finalStatusText})`, 'success');
+
+                toggleStatusMenu();
+                currentSelectedPatientIndex = null;
+                showSection('dashboard-nurse-view');
+            }
+        }
+
+        function renderNurseHistory() {
+            const historyEl = document.getElementById('nurse-history-list');
+            historyEl.innerHTML = '';
+
+            if (databaseHistory.length === 0) {
+                historyEl.innerHTML = '<p style="color: var(--gray-text); font-size: 0.9rem;">Belum ada riwayat pasien yang diakhiri perawatannya.</p>';
+                return;
+            }
+
+            databaseHistory.forEach((p, index) => {
+                const logs = p.logs || [];
+                const latestLog = logs.length > 0 ? logs[0] : null;
+
+                historyEl.innerHTML += `
+                    <div style="background: var(--chat-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); border-left: 5px solid var(--secondary);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                            <div>
+                                <strong style="color: var(--dark-text); font-size: 1rem;">${p.nama} (RM: ${p.rm})</strong>
+                                <div style="font-size: 0.8rem; color: var(--primary); font-weight: 600;"><i class="fa-solid fa-user-doctor"></i> DPJP: ${p.dokter || '-'}</div>
+                            </div>
+                            <span class="badge" style="margin-bottom: 0; padding: 3px 10px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.15); color: var(--danger);">${p.status}</span>
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--gray-text); margin-bottom: 4px;"><strong>Selesai pada:</strong> ${p.dischargeDate}</p>
+                        ${latestLog ? `<p style="font-size: 0.85rem; color: var(--dark-text); margin-bottom: 6px;"><strong>Vital Terakhir (${latestLog.shift}):</strong> TD: ${latestLog.td} | HR: ${latestLog.nadi} | SpO2: ${latestLog.spo2} | RR: ${latestLog.rr} | GCS: ${latestLog.gcs}</p>` : ''}
+                        ${p.dischargeNote ? `<p style="font-size: 0.85rem; color: var(--dark-text); margin-bottom: 8px;"><strong>Ket. Keluar:</strong> ${p.dischargeNote}</p>` : ''}
+                        
+                        <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                            <button class="btn-action-table" style="background: var(--primary); padding: 5px 12px; font-size: 0.8rem;" onclick="viewHistoryPatientDetail(${index})">
+                                <i class="fa-solid fa-eye"></i> Lihat Detail Log
+                            </button>
+                            <button class="btn-action-table" style="background: var(--success); padding: 5px 12px; font-size: 0.8rem;" onclick="reactivatePatient(${index})">
+                                <i class="fa-solid fa-rotate-left"></i> Aktifkan Kembali Pasien
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function viewHistoryPatientDetail(index) {
+            const p = databaseHistory[index];
+            if (!p) return;
+
+            isFromHistoryView = true;
+            closeHistoryModal();
+            activePatient = p;
+            renderPatientDashboard();
+            showSection('dashboard-patient-view');
+        }
+
+        function reactivatePatient(index) {
+            const p = databaseHistory[index];
+            if (!p) return;
+
+            const confirmRestore = confirm(`Konfirmasi Aktifkan Kembali:\n\nYakin ingin mengembalikan ${p.nama} (No. RM: ${p.rm}) ke daftar pasien HCU aktif?`);
+
+            if (confirmRestore) {
+                delete p.dischargeDate;
+                delete p.status;
+                delete p.dischargeNote;
+
+                databasePasien.unshift(p);
+                databaseHistory.splice(index, 1);
+
+                saveDatabaseToStorage();
+                showToast(`Pasien ${p.nama} diaktifkan kembali!`, 'success');
+
+                renderNurseHistory();
+                renderNursePatientTable();
+            }
+        }
+
+        function renderNurseRatings() {
+            const listEl = document.getElementById('nurse-ratings-list');
+            listEl.innerHTML = '';
+
+            const allPatients = [...databasePasien, ...databaseHistory];
+            const ratedPatients = allPatients.filter(p => p.rating && p.rating > 0);
+
+            if(ratedPatients.length === 0) {
+                listEl.innerHTML = '<p style="color: var(--gray-text); font-size: 0.9rem;">Belum ada ulasan yang masuk dari keluarga pasien.</p>';
+                return;
+            }
+
+            ratedPatients.forEach(p => {
+                let starsHtml = '';
+                for(let i=1; i<=5; i++) {
+                    starsHtml += `<i class="fa-solid fa-star" style="color: ${i <= p.rating ? 'var(--warning)' : 'var(--border-color)'}; font-size: 0.9rem;"></i>`;
+                }
+
+                listEl.innerHTML += `
+                    <div style="background: var(--chat-bg); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-color);">
+                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <strong>${p.nama} (RM: ${p.rm})</strong>
+                            <div>${starsHtml}</div>
+                        </div>
+                        <p style="font-size: 0.88rem; color: var(--gray-text);">${p.feedback || '<em>Tidak ada catatan tertulis.</em>'}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function logout() {
+            if (synth.speaking) {
+                synth.cancel();
+                updateVoiceUI(false);
+            }
+            isFromHistoryView = false;
+            activePatient = null;
+            currentSelectedPatientIndex = null;
+            currentLoggedInNurse = null;
+            navigationHistory = ['hero-view'];
+            showSection('hero-view', true);
+            showToast('Anda telah keluar dari sistem.', 'info');
+        }
+    </script>
+</body>
+</html>
