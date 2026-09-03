@@ -1994,6 +1994,28 @@
     width: 42px; height: 42px; border: 0; border-radius: 50%;
     background: var(--primary); color: #fff; cursor: pointer; flex-shrink: 0;
 }
+
+.hcu-patient-result { font-size:.82rem; }
+.hcu-result-title { font-weight:800; color:var(--primary); margin-bottom:.7rem; display:flex; gap:8px; align-items:center; }
+.hcu-patient-identity { display:flex; justify-content:space-between; gap:10px; padding-bottom:.6rem; border-bottom:1px solid var(--border-color); }
+.hcu-patient-identity span,.hcu-result-meta { color:var(--gray-text); font-size:.72rem; }
+.hcu-result-meta { margin:.5rem 0 .7rem; }
+.hcu-vitals-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+.hcu-vitals-grid > div { background:var(--bg-color); border:1px solid var(--border-color); border-radius:10px; padding:7px 8px; min-width:0; }
+.hcu-vitals-grid span { display:block; color:var(--gray-text); font-size:.68rem; margin-bottom:2px; }
+.hcu-vitals-grid strong { color:var(--dark-text); font-size:.8rem; word-break:break-word; }
+.hcu-vitals-grid small { font-size:.62rem; font-weight:500; }
+.hcu-result-note { margin-top:8px; padding:8px; border-radius:10px; background:var(--bg-color); border-left:3px solid var(--secondary); display:flex; gap:7px; line-height:1.45; }
+.hcu-result-note i { color:var(--secondary); margin-top:2px; }
+.hcu-history-item { padding:9px 0; border-bottom:1px solid var(--border-color); }
+.hcu-history-item:last-child { border-bottom:0; padding-bottom:0; }
+.hcu-history-head { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; margin-bottom:5px; }
+.hcu-history-head strong { font-size:.72rem; color:var(--dark-text); }
+.hcu-history-head span { font-size:.65rem; padding:3px 6px; border-radius:999px; background:var(--bg-color); color:var(--primary); white-space:nowrap; }
+.hcu-history-vitals { font-size:.68rem; line-height:1.6; color:var(--gray-text); }
+.hcu-history-vitals b { color:var(--dark-text); }
+.hcu-history-note { margin-top:5px; padding:7px; border-radius:8px; background:var(--bg-color); color:var(--gray-text); font-size:.7rem; line-height:1.45; }
+
 @media (max-width: 768px) {
     .hcu-assistant-card { margin-top: 1.5rem; padding: 1rem; border-radius: 18px; }
     .hcu-assistant-card-head { align-items: flex-start; }
@@ -2110,8 +2132,8 @@
                     <div class="hcu-assistant-quick">
                         <button type="button" onclick="askHcuAssistant('Apa itu HCU Melati?')">🏥 Apa itu HCU?</button>
                         <button type="button" onclick="askHcuAssistant('Bagaimana cara menggunakan sistem?')">📖 Cara menggunakan sistem</button>
-                        <button type="button" onclick="askHcuAssistant('Bagaimana kondisi pasien saya saat ini?')">🩺 Kondisi pasien</button>
-                        <button type="button" onclick="askHcuAssistant('Tampilkan riwayat pasien saya')">📋 Riwayat pasien</button>
+                        <button type="button" onclick="showHcuPatientCondition()">🩺 Kondisi pasien</button>
+                        <button type="button" onclick="showHcuPatientHistory()">📋 Riwayat pasien</button>
                     </div>
                 </div>
             </section>
@@ -4014,14 +4036,79 @@
             document.getElementById('hcu-assistant-backdrop')?.classList.remove('active');
         }
 
-        function addHcuAssistantMessage(sender, text) {
+        function escapeHcuHtml(value) {
+            return String(value ?? '-').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[ch]));
+        }
+
+        function addHcuAssistantMessage(sender, text, allowHtml = false) {
             const box = document.getElementById('hcu-assistant-messages');
             if (!box) return;
             const el = document.createElement('div');
             el.className = 'hcu-assistant-msg ' + sender;
-            el.textContent = text;
+            if (allowHtml) el.innerHTML = text;
+            else el.textContent = text;
             box.appendChild(el);
             box.scrollTop = box.scrollHeight;
+        }
+
+        function hcuRequirePatient() {
+            if (!activePatient) {
+                addHcuAssistantMessage('bot', '🔐 Untuk melihat data pasien, silakan login sebagai keluarga pasien terlebih dahulu. Setelah login berhasil, data yang ditampilkan akan mengikuti database pasien yang terverifikasi.');
+                return false;
+            }
+            return true;
+        }
+
+        function showHcuPatientCondition() {
+            openHcuAssistant();
+            setTimeout(() => {
+                addHcuAssistantMessage('user', '🩺 Kondisi pasien');
+                if (!hcuRequirePatient()) return;
+                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+                const latest = logs[0];
+                if (!latest) {
+                    addHcuAssistantMessage('bot', `📋 <strong>Data Kondisi Pasien</strong><br><br>Nama: <strong>${escapeHcuHtml(activePatient.nama)}</strong><br>No. RM: <strong>${escapeHcuHtml(activePatient.rm)}</strong><br><br>Belum ada data tanda vital/perkembangan yang tersimpan di database.`, true);
+                    return;
+                }
+                const html = `
+                    <div class="hcu-patient-result">
+                        <div class="hcu-result-title"><i class="fa-solid fa-heart-pulse"></i> Kondisi Pasien Terkini</div>
+                        <div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>
+                        <div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div>
+                        <div class="hcu-vitals-grid">
+                            <div><span>TD</span><strong>${escapeHcuHtml(latest.td)}</strong></div>
+                            <div><span>Nadi</span><strong>${escapeHcuHtml(latest.nadi)} <small>x/menit</small></strong></div>
+                            <div><span>RR</span><strong>${escapeHcuHtml(latest.rr)} <small>x/menit</small></strong></div>
+                            <div><span>SpO₂</span><strong>${escapeHcuHtml(latest.spo2)}%</strong></div>
+                            <div><span>Suhu</span><strong>${escapeHcuHtml(latest.suhu)} °C</strong></div>
+                            <div><span>Oksigen</span><strong>${escapeHcuHtml(latest.o2device)}</strong></div>
+                            <div><span>GCS</span><strong>${escapeHcuHtml(latest.gcs)}</strong></div>
+                            <div><span>DPJP</span><strong>${escapeHcuHtml(activePatient.dokter)}</strong></div>
+                        </div>
+                        <div class="hcu-result-note"><i class="fa-solid fa-clipboard-user"></i><div><b>Catatan Perawat</b><br>${escapeHcuHtml(latest.catatan)}</div></div>
+                    </div>`;
+                addHcuAssistantMessage('bot', html, true);
+            }, 100);
+        }
+
+        function showHcuPatientHistory() {
+            openHcuAssistant();
+            setTimeout(() => {
+                addHcuAssistantMessage('user', '📋 Riwayat pasien');
+                if (!hcuRequirePatient()) return;
+                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+                if (!logs.length) {
+                    addHcuAssistantMessage('bot', `📋 <strong>Riwayat Pasien</strong><br><br>Nama: <strong>${escapeHcuHtml(activePatient.nama)}</strong><br>No. RM: <strong>${escapeHcuHtml(activePatient.rm)}</strong><br><br>Belum ada riwayat perkembangan yang tersimpan di database.`, true);
+                    return;
+                }
+                const historyHtml = logs.map((log, i) => `
+                    <div class="hcu-history-item">
+                        <div class="hcu-history-head"><strong>${i + 1}. ${escapeHcuHtml(log.datetime)}</strong><span>Shift ${escapeHcuHtml(log.shift)}</span></div>
+                        <div class="hcu-history-vitals">TD <b>${escapeHcuHtml(log.td)}</b> · Nadi <b>${escapeHcuHtml(log.nadi)}</b> · RR <b>${escapeHcuHtml(log.rr)}</b> · SpO₂ <b>${escapeHcuHtml(log.spo2)}%</b> · Suhu <b>${escapeHcuHtml(log.suhu)}°C</b> · GCS <b>${escapeHcuHtml(log.gcs)}</b></div>
+                        <div class="hcu-history-note">${escapeHcuHtml(log.catatan)}</div>
+                    </div>`).join('');
+                addHcuAssistantMessage('bot', `<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Perkembangan Pasien</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>${historyHtml}</div>`, true);
+            }, 100);
         }
 
         function askHcuAssistant(question) {
