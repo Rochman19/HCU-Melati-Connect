@@ -2086,12 +2086,22 @@
         .unified-chat-head strong { display:block; font-size:.82rem; color:var(--dark-text); }
         .unified-chat-head span { display:block; margin-top:2px; font-size:.65rem; color:var(--success); }
         .unified-chat-head span i { font-size:.5rem; }
-        .unified-chat-quick { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:7px; }
-        .unified-chat-quick button { border:1px solid var(--border-color); background:var(--card-bg); color:var(--dark-text); border-radius:999px; padding:6px 9px; font:inherit; font-size:.68rem; font-weight:600; cursor:pointer; }
-        .unified-chat-quick button:hover { border-color:var(--primary); color:var(--primary); }
+        .unified-chat-quick { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:9px; }
+        .unified-chat-quick button { border:1px solid rgba(16,185,129,.22); background:linear-gradient(145deg,#ffffff,#f0fdf8); color:#075e54; border-radius:14px; padding:7px 11px; font:inherit; font-size:.68rem; font-weight:700; cursor:pointer; box-shadow:0 3px 10px rgba(15,118,110,.08); transition:all .2s ease; display:inline-flex; align-items:center; gap:6px; }
+        .unified-chat-quick button i { font-size:.8rem; }
+        .unified-chat-quick button:hover { transform:translateY(-1px); border-color:#10b981; color:#047857; box-shadow:0 5px 14px rgba(16,185,129,.16); }
+        .hcu-tvt-chat-options { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px !important; margin-top:10px; }
+        .hcu-tvt-chat-options button { border:1px solid rgba(16,185,129,.20); background:linear-gradient(145deg,#ffffff,#f0fdf8); color:#075e54; border-radius:15px; min-height:52px; padding:8px 10px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:flex-start; gap:8px; box-shadow:0 4px 12px rgba(15,118,110,.08); transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease; }
+        .hcu-tvt-chat-options button::first-letter { font-size:1.15rem; }
+        .hcu-tvt-chat-options button:hover, .hcu-tvt-chat-options button:active { transform:translateY(-1px); border-color:#10b981; background:linear-gradient(145deg,#ecfdf5,#ffffff); box-shadow:0 7px 16px rgba(16,185,129,.15); }
+        .hcu-tvt-chat-options button:focus-visible { outline:3px solid rgba(16,185,129,.22); outline-offset:2px; }
+        .hcu-tvt-chat-options .vital-icon { width:32px; height:32px; flex:0 0 32px; display:grid; place-items:center; border-radius:10px; background:#ecfdf5; font-size:1.15rem; }
+        .hcu-tvt-chat-options button span:last-child { display:flex; flex-direction:column; align-items:flex-start; line-height:1.12; gap:3px; }
+        .hcu-tvt-chat-options button b { font-size:.76rem; }
+        .hcu-tvt-chat-options button small { font-size:.56rem; font-weight:500; color:#64748b; }
         .unified-assistant-message { align-self:flex-start; max-width:90%; padding:9px 11px; border-radius:14px; background:var(--card-bg); border:1px solid rgba(2,132,199,.22); color:var(--dark-text); font-size:.8rem; line-height:1.45; margin:7px 0; }
         .unified-assistant-label { color:var(--primary); font-size:.67rem; font-weight:700; margin-bottom:4px; }
-        @media (max-width:768px) { .unified-chat-quick button { font-size:.64rem; padding:5px 8px; } .unified-assistant-message { max-width:94%; } }
+        @media (max-width:768px) { .unified-chat-quick button { font-size:.64rem; padding:6px 9px; } .unified-assistant-message { max-width:94%; } .hcu-tvt-chat-options { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px !important; } .hcu-tvt-chat-options button { min-height:50px; padding:7px 8px; } .hcu-tvt-chat-options .vital-icon { width:29px; height:29px; flex-basis:29px; font-size:1rem; } .hcu-tvt-chat-options button b { font-size:.69rem; } .hcu-tvt-chat-options button small { font-size:.51rem; } }
     </style>
 </head>
 <body data-theme="light">
@@ -4374,14 +4384,14 @@
                         <div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>
                         <div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div>
                         <p style="margin:.65rem 0 .5rem;color:var(--gray-text);font-size:.85rem;">Silakan pilih TTV yang ingin diketahui:</p>
-                        <div class="hcu-tvt-chat-options" style="display:flex;flex-wrap:wrap;gap:7px;">
-                            <button type="button" onclick="askPatientVital('td','🩸 Tekanan Darah')">🩸 TD</button>
-                            <button type="button" onclick="askPatientVital('nadi','❤️ HR / Nadi')">❤️ HR / Nadi</button>
-                            <button type="button" onclick="askPatientVital('rr','🫁 RR')">🫁 RR</button>
-                            <button type="button" onclick="askPatientVital('suhu','🌡️ Suhu')">🌡️ Suhu</button>
-                            <button type="button" onclick="askPatientVital('spo2','💧 SpO₂')">💧 SpO₂</button>
-                            <button type="button" onclick="askPatientVital('o2device','🫧 Alat O2')">🫧 Alat O2</button>
-                            <button type="button" onclick="askPatientVital('gcs','🧠 GCS')">🧠 GCS</button>
+                        <div class="hcu-tvt-chat-options">
+                            <button type="button" onclick="askPatientVital('td','🩸 Tekanan Darah')"><span class="vital-icon">🩸</span><span><b>TD</b><small>Tekanan Darah</small></span></button>
+                            <button type="button" onclick="askPatientVital('nadi','❤️ HR / Nadi')"><span class="vital-icon">❤️</span><span><b>HR / Nadi</b><small>Heart Rate</small></span></button>
+                            <button type="button" onclick="askPatientVital('rr','🫁 RR')"><span class="vital-icon">🫁</span><span><b>RR</b><small>Pernapasan</small></span></button>
+                            <button type="button" onclick="askPatientVital('suhu','🌡️ Suhu')"><span class="vital-icon">🌡️</span><span><b>Suhu</b><small>Suhu Tubuh</small></span></button>
+                            <button type="button" onclick="askPatientVital('spo2','💧 SpO₂')"><span class="vital-icon">💧</span><span><b>SpO₂</b><small>Saturasi Oksigen</small></span></button>
+                            <button type="button" onclick="askPatientVital('o2device','🫧 Alat O2')"><span class="vital-icon">🫧</span><span><b>Alat O₂</b><small>Terapi Oksigen</small></span></button>
+                            <button type="button" onclick="askPatientVital('gcs','🧠 GCS')"><span class="vital-icon">🧠</span><span><b>GCS</b><small>Kesadaran</small></span></button>
                         </div>
                     </div>`);
                 addUnifiedBackToPetugasButton();
