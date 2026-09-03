@@ -2015,6 +2015,13 @@
 .hcu-vitals-grid span { display:block; color:var(--gray-text); font-size:.68rem; margin-bottom:2px; }
 .hcu-vitals-grid strong { color:var(--dark-text); font-size:.8rem; word-break:break-word; }
 .hcu-vitals-grid small { font-size:.62rem; font-weight:500; }
+
+        .unified-typing-message { min-width: 90px; }
+        .typing-dots { display: inline-flex; gap: 5px; align-items: center; padding: 8px 4px; }
+        .typing-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--secondary); display: inline-block; animation: hcuTyping 1.2s infinite ease-in-out; }
+        .typing-dots i:nth-child(2) { animation-delay: .15s; }
+        .typing-dots i:nth-child(3) { animation-delay: .30s; }
+        @keyframes hcuTyping { 0%,60%,100% { transform: translateY(0); opacity:.35; } 30% { transform: translateY(-4px); opacity:1; } }
 .unified-chat-back-btn {
     display:inline-flex;
     align-items:center;
@@ -3733,7 +3740,11 @@
                     container.innerHTML += `<div class="chat-message ${isMe ? 'sent' : 'received'}">${text}<span class="meta">${sender}${extra}</span></div>`;
                 } else {
                     const m = item.data;
-                    container.innerHTML += `<div class="unified-assistant-message"><div class="unified-assistant-label"><i class="fa-solid fa-robot"></i> Asisten HCU Melati</div>${m.html}</div>`;
+                    if (m.role === 'user') {
+                        container.innerHTML += `<div class="chat-message sent unified-action-message">${m.html}<span class="meta">Anda • ${escapeHcuHtml(m.time || '')}</span></div>`;
+                    } else {
+                        container.innerHTML += `<div class="unified-assistant-message"><div class="unified-assistant-label"><i class="fa-solid fa-robot"></i> Asisten HCU Melati</div>${m.html}</div>`;
+                    }
                 }
             });
 
@@ -3741,8 +3752,31 @@
         }
 
         function addUnifiedAssistantMessage(html) {
-            unifiedAssistantMessages.push({ html, createdAt: Date.now() });
+            unifiedAssistantMessages.push({ html, role: 'assistant', createdAt: Date.now() });
             renderPatientChats();
+        }
+
+        function addUnifiedUserAction(text) {
+            const now = new Date();
+            const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} WIB`;
+            unifiedAssistantMessages.push({
+                html: escapeHcuHtml(text),
+                role: 'user',
+                time,
+                createdAt: Date.now()
+            });
+            renderPatientChats();
+        }
+
+        function showUnifiedTyping() {
+            const container = document.getElementById('patient-chat-messages');
+            if (!container) return;
+            const typing = document.createElement('div');
+            typing.className = 'unified-assistant-message unified-typing-message';
+            typing.innerHTML = `<div class="unified-assistant-label"><i class="fa-solid fa-robot"></i> Asisten HCU Melati</div><span class="typing-dots"><i></i><i></i><i></i></span>`;
+            container.appendChild(typing);
+            container.scrollTop = container.scrollHeight;
+            return typing;
         }
 
         function returnToPetugasChat() {
@@ -4313,43 +4347,61 @@
         }
 
         function showHcuPatientCondition(fromVerification = false) {
-            if (!activePatient) {
-                return hcuRequirePatient('condition');
-            }
+            if (!activePatient) return hcuRequirePatient('condition');
             openUnifiedChat();
-            if (!fromVerification) addUnifiedAssistantMessage('🩺 <strong>Kondisi pasien</strong>');
-            const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
-            const latest = logs[0];
-            if (!latest) {
-                addUnifiedAssistantMessage(`📋 <strong>${escapeHcuHtml(activePatient.nama)}</strong> (No. RM ${escapeHcuHtml(activePatient.rm)})<br>Belum ada data tanda vital/perkembangan di database.`);
-                return;
+            if (fromVerification) {
+                renderPatientChats();
+            } else {
+                addUnifiedUserAction('🩺 Kondisi pasien');
             }
-            addUnifiedAssistantMessage(`<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-heart-pulse"></i> Kondisi Pasien Terkini</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div><div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div><div class="hcu-vitals-grid"><div><span>TD</span><strong>${escapeHcuHtml(latest.td)}</strong></div><div><span>Nadi</span><strong>${escapeHcuHtml(latest.nadi)} <small>x/menit</small></strong></div><div><span>RR</span><strong>${escapeHcuHtml(latest.rr)} <small>x/menit</small></strong></div><div><span>SpO₂</span><strong>${escapeHcuHtml(latest.spo2)}%</strong></div><div><span>Suhu</span><strong>${escapeHcuHtml(latest.suhu)} °C</strong></div><div><span>Oksigen</span><strong>${escapeHcuHtml(latest.o2device)}</strong></div><div><span>GCS</span><strong>${escapeHcuHtml(latest.gcs)}</strong></div><div><span>DPJP</span><strong>${escapeHcuHtml(activePatient.dokter)}</strong></div></div><div class="hcu-result-note"><i class="fa-solid fa-clipboard-user"></i><div><b>Catatan Perawat</b><br>${escapeHcuHtml(latest.catatan)}</div></div></div>`);
-            addUnifiedBackToPetugasButton();
+
+            const typing = showUnifiedTyping();
+            setTimeout(() => {
+                if (typing) typing.remove();
+                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+                const latest = logs[0];
+                if (!latest) {
+                    addUnifiedAssistantMessage(`📋 <strong>${escapeHcuHtml(activePatient.nama)}</strong> (No. RM ${escapeHcuHtml(activePatient.rm)})<br>Belum ada data tanda vital/perkembangan di database.`);
+                    return;
+                }
+                addUnifiedAssistantMessage(`<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-heart-pulse"></i> Kondisi Pasien Terkini</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div><div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div><div class="hcu-vitals-grid"><div><span>TD</span><strong>${escapeHcuHtml(latest.td)}</strong></div><div><span>Nadi</span><strong>${escapeHcuHtml(latest.nadi)} <small>x/menit</small></strong></div><div><span>RR</span><strong>${escapeHcuHtml(latest.rr)} <small>x/menit</small></strong></div><div><span>SpO₂</span><strong>${escapeHcuHtml(latest.spo2)}%</strong></div><div><span>Suhu</span><strong>${escapeHcuHtml(latest.suhu)} °C</strong></div><div><span>Oksigen</span><strong>${escapeHcuHtml(latest.o2device)}</strong></div><div><span>GCS</span><strong>${escapeHcuHtml(latest.gcs)}</strong></div><div><span>DPJP</span><strong>${escapeHcuHtml(activePatient.dokter)}</strong></div></div><div class="hcu-result-note"><i class="fa-solid fa-clipboard-user"></i><div><b>Catatan Perawat</b><br>${escapeHcuHtml(latest.catatan)}</div></div></div>`);
+                addUnifiedBackToPetugasButton();
+            }, 650);
         }
 
         function showHcuPatientHistory(fromVerification = false) {
             if (!activePatient) return hcuRequirePatient('history');
             openUnifiedChat();
-            if (!fromVerification) addUnifiedAssistantMessage('📋 <strong>Riwayat pasien</strong>');
-            const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
-            if (!logs.length) {
-                addUnifiedAssistantMessage(`📋 <strong>${escapeHcuHtml(activePatient.nama)}</strong> (No. RM ${escapeHcuHtml(activePatient.rm)})<br>Belum ada riwayat perkembangan di database.`);
-                return;
+            if (fromVerification) {
+                renderPatientChats();
+            } else {
+                addUnifiedUserAction('📋 Riwayat pasien');
             }
-            const historyHtml = logs.map((log, i) => `<div class="hcu-history-item"><div class="hcu-history-head"><strong>${i + 1}. ${escapeHcuHtml(log.datetime)}</strong><span>Shift ${escapeHcuHtml(log.shift)}</span></div><div class="hcu-history-vitals">TD <b>${escapeHcuHtml(log.td)}</b> · Nadi <b>${escapeHcuHtml(log.nadi)}</b> · RR <b>${escapeHcuHtml(log.rr)}</b> · SpO₂ <b>${escapeHcuHtml(log.spo2)}%</b> · Suhu <b>${escapeHcuHtml(log.suhu)}°C</b> · GCS <b>${escapeHcuHtml(log.gcs)}</b></div><div class="hcu-history-note">${escapeHcuHtml(log.catatan)}</div></div>`).join('');
-            addUnifiedAssistantMessage(`<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Perkembangan Pasien</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>${historyHtml}</div>`);
-            addUnifiedBackToPetugasButton();
+
+            const typing = showUnifiedTyping();
+            setTimeout(() => {
+                if (typing) typing.remove();
+                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+                if (!logs.length) {
+                    addUnifiedAssistantMessage(`📋 <strong>${escapeHcuHtml(activePatient.nama)}</strong> (No. RM ${escapeHcuHtml(activePatient.rm)})<br>Belum ada riwayat perkembangan di database.`);
+                    return;
+                }
+                const historyHtml = logs.map((log, i) => `<div class="hcu-history-item"><div class="hcu-history-head"><strong>${i + 1}. ${escapeHcuHtml(log.datetime)}</strong><span>Shift ${escapeHcuHtml(log.shift)}</span></div><div class="hcu-history-vitals">TD <b>${escapeHcuHtml(log.td)}</b> · Nadi <b>${escapeHcuHtml(log.nadi)}</b> · RR <b>${escapeHcuHtml(log.rr)}</b> · SpO₂ <b>${escapeHcuHtml(log.spo2)}%</b> · Suhu <b>${escapeHcuHtml(log.suhu)}°C</b> · GCS <b>${escapeHcuHtml(log.gcs)}</b></div><div class="hcu-history-note">${escapeHcuHtml(log.catatan)}</div></div>`).join('');
+                addUnifiedAssistantMessage(`<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Perkembangan Pasien</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>${historyHtml}</div>`);
+                addUnifiedBackToPetugasButton();
+            }, 650);
         }
 
         function askHcuAssistant(question) {
             if (activePatient) {
                 openUnifiedChat();
-                addUnifiedAssistantMessage(`🤖 <strong>${escapeHcuHtml(question)}</strong>`);
+                addUnifiedUserAction(`🤖 ${question}`);
+                const typing = showUnifiedTyping();
                 setTimeout(() => {
+                    if (typing) typing.remove();
                     addUnifiedAssistantMessage(escapeHcuHtml(getHcuAssistantAnswer(question)));
                     addUnifiedBackToPetugasButton();
-                }, 150);
+                }, 650);
                 return;
             }
             openHcuAssistant();
