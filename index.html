@@ -3470,7 +3470,10 @@
                 const rm = cleanString(activePatient.rm);
                 const latest = databasePasien.find(p => cleanString(p.rm) === rm);
                 const history = databaseHistory.find(p => cleanString(p.rm) === rm);
-                if (latest || history) activePatient = latest || history;
+                if (latest || history) {
+                    activePatient = latest || history;
+                    savePatientSession(activePatient);
+                }
             }
 
             if (activePatient && document.getElementById('patient-chat-review-modal')?.classList.contains('active')) {
@@ -3511,7 +3514,10 @@
         }
 
         async function loadDatabaseFromServer() {
-            if (!supabaseClient) return;
+            if (!supabaseClient) {
+                restorePatientSession();
+                return;
+            }
             try {
                 const { data, error } = await supabaseClient.from('hcu_state').select('id, patients, chats, history, updated_at').eq('id', 1).maybeSingle();
                 if (error) throw error;
@@ -3521,6 +3527,7 @@
                 console.warn('Supabase belum dapat diakses. Cache lokal digunakan:', error);
             }
             startRealtimeSync();
+            restorePatientSession();
         }
 
         function cleanString(str) {
@@ -3605,6 +3612,57 @@
         }
         function closeRatingsModal() { document.getElementById('ratings-modal').classList.remove('active'); }
 
+        // =========================================================
+        // SESI KELUARGA PASIEN: TETAP LOGIN SAAT HALAMAN DI-REFRESH
+        // Yang disimpan hanya identitas sesi (Nama + No. RM),
+        // bukan salinan data pasien. Data pasien tetap diambil dari database.
+        // =========================================================
+        const ACTIVE_PATIENT_SESSION_KEY = 'hcu_active_patient_session';
+
+        function savePatientSession(patient) {
+            if (!patient || !patient.rm) return;
+            localStorage.setItem(ACTIVE_PATIENT_SESSION_KEY, JSON.stringify({
+                nama: patient.nama || '',
+                rm: patient.rm || '',
+                savedAt: Date.now()
+            }));
+        }
+
+        function clearPatientSession() {
+            localStorage.removeItem(ACTIVE_PATIENT_SESSION_KEY);
+        }
+
+        function restorePatientSession() {
+            try {
+                const raw = localStorage.getItem(ACTIVE_PATIENT_SESSION_KEY);
+                if (!raw) return false;
+                const session = JSON.parse(raw);
+                if (!session || !session.rm) return false;
+
+                const rm = cleanString(session.rm);
+                const nama = cleanString(session.nama || '');
+                const foundActive = databasePasien.find(p => cleanString(p.rm) === rm && (!nama || cleanString(p.nama) === nama));
+                const foundHistory = databaseHistory.find(p => cleanString(p.rm) === rm && (!nama || cleanString(p.nama) === nama));
+                const found = foundActive || foundHistory;
+
+                if (!found) {
+                    clearPatientSession();
+                    return false;
+                }
+
+                activePatient = found;
+                isFromHistoryView = false;
+                navigationHistory = ['hero-view', 'dashboard-patient-view'];
+                renderPatientDashboard();
+                showSection('dashboard-patient-view', true);
+                return true;
+            } catch (error) {
+                console.warn('Sesi keluarga pasien tidak dapat dipulihkan:', error);
+                clearPatientSession();
+                return false;
+            }
+        }
+
         function handlePatientLogin(e) {
             e.preventDefault();
             const nameInput = cleanString(document.getElementById('patient-name-input').value);
@@ -3616,12 +3674,14 @@
             if (foundActive) {
                 isFromHistoryView = false;
                 activePatient = foundActive;
+                savePatientSession(foundActive);
                 renderPatientDashboard();
                 showSection('dashboard-patient-view');
                 showToast(`Selamat datang keluarga ${foundActive.nama}!`, 'success');
             } else if (foundHistory) {
                 isFromHistoryView = false;
                 activePatient = foundHistory;
+                savePatientSession(foundHistory);
                 renderPatientDashboard();
                 showSection('dashboard-patient-view');
                 showToast(`Membuka riwayat data pasien ${foundHistory.nama}`, 'info');
@@ -4259,6 +4319,7 @@
             }
             isFromHistoryView = false;
             activePatient = null;
+            clearPatientSession();
             unifiedAssistantMessages = [];
             unifiedAssistantStarted = false;
             currentSelectedPatientIndex = null;
@@ -4343,6 +4404,7 @@
                 return;
             }
             activePatient = found;
+            savePatientSession(found);
             unifiedAssistantMessages = [];
             unifiedAssistantStarted = false;
             closeHcuAssistant();
