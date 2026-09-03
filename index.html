@@ -2026,7 +2026,15 @@
     .hcu-assistant-messages { min-height: 0; max-height: none; }
 }
 
-    </style>
+    
+        .hcu-login-request { line-height: 1.55; }
+        .hcu-login-request p { margin: 8px 0 12px; }
+        .hcu-inline-login { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+        .hcu-inline-login input { width:100%; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; font:inherit; background:var(--card-bg); color:var(--dark-text); outline:none; }
+        .hcu-inline-login input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,150,199,.12); }
+        .hcu-inline-login button { border:0; border-radius:10px; padding:10px 12px; font:inherit; font-weight:700; cursor:pointer; background:var(--primary); color:#fff; }
+        .hcu-inline-login button:hover { filter:brightness(.96); }
+</style>
 </head>
 <body data-theme="light">
 
@@ -4051,19 +4059,57 @@
             box.scrollTop = box.scrollHeight;
         }
 
-        function hcuRequirePatient() {
-            if (!activePatient) {
-                addHcuAssistantMessage('bot', '🔐 Untuk melihat data pasien, silakan login sebagai keluarga pasien terlebih dahulu. Setelah login berhasil, data yang ditampilkan akan mengikuti database pasien yang terverifikasi.');
-                return false;
-            }
-            return true;
+        let hcuPendingPatientRequest = null;
+
+        function hcuRequirePatient(requestType = null) {
+            if (activePatient) return true;
+
+            hcuPendingPatientRequest = requestType;
+            addHcuAssistantMessage('bot', `
+                <div class="hcu-login-request">
+                    <div class="hcu-result-title"><i class="fa-solid fa-user-shield"></i> Verifikasi Data Pasien</div>
+                    <p>Silakan masukkan <strong>Nama Pasien</strong> dan <strong>No. RM</strong> sesuai data yang terdaftar. Setelah berhasil diverifikasi, data pasien akan langsung ditampilkan di chatbot.</p>
+                    <form class="hcu-inline-login" onsubmit="submitHcuPatientVerification(event)">
+                        <input id="hcu-patient-name" type="text" placeholder="Nama pasien" autocomplete="off" required>
+                        <input id="hcu-patient-rm" type="text" placeholder="No. RM" autocomplete="off" required>
+                        <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Verifikasi & Tampilkan</button>
+                    </form>
+                </div>`, true);
+            setTimeout(() => document.getElementById('hcu-patient-name')?.focus(), 100);
+            return false;
         }
 
-        function showHcuPatientCondition() {
+        function submitHcuPatientVerification(e) {
+            e.preventDefault();
+            const name = cleanString(document.getElementById('hcu-patient-name')?.value || '');
+            const rm = cleanString(document.getElementById('hcu-patient-rm')?.value || '');
+            if (!name || !rm) return;
+
+            const foundActive = databasePasien.find(p => cleanString(p.nama) === name && cleanString(p.rm) === rm);
+            const foundHistory = databaseHistory.find(p => cleanString(p.nama) === name && cleanString(p.rm) === rm);
+            const found = foundActive || foundHistory;
+
+            if (!found) {
+                addHcuAssistantMessage('bot', '❌ Nama pasien dan No. RM tidak cocok dengan database. Silakan periksa kembali data yang dimasukkan.');
+                return;
+            }
+
+            activePatient = found;
+            addHcuAssistantMessage('bot', `✅ Data berhasil diverifikasi.<br><br><strong>Nama:</strong> ${escapeHcuHtml(found.nama)}<br><strong>No. RM:</strong> ${escapeHcuHtml(found.rm)}<br><br>Saya akan menampilkan data sesuai pilihan Anda.`, true);
+
+            const request = hcuPendingPatientRequest;
+            hcuPendingPatientRequest = null;
+            setTimeout(() => {
+                if (request === 'condition') showHcuPatientCondition(true);
+                else if (request === 'history') showHcuPatientHistory(true);
+            }, 350);
+        }
+
+        function showHcuPatientCondition(fromVerification = false) {
             openHcuAssistant();
             setTimeout(() => {
-                addHcuAssistantMessage('user', '🩺 Kondisi pasien');
-                if (!hcuRequirePatient()) return;
+                if (!fromVerification) addHcuAssistantMessage('user', '🩺 Kondisi pasien');
+                if (!hcuRequirePatient('condition')) return;
                 const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
                 const latest = logs[0];
                 if (!latest) {
@@ -4091,11 +4137,11 @@
             }, 100);
         }
 
-        function showHcuPatientHistory() {
+        function showHcuPatientHistory(fromVerification = false) {
             openHcuAssistant();
             setTimeout(() => {
-                addHcuAssistantMessage('user', '📋 Riwayat pasien');
-                if (!hcuRequirePatient()) return;
+                if (!fromVerification) addHcuAssistantMessage('user', '📋 Riwayat pasien');
+                if (!hcuRequirePatient('history')) return;
                 const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
                 if (!logs.length) {
                     addHcuAssistantMessage('bot', `📋 <strong>Riwayat Pasien</strong><br><br>Nama: <strong>${escapeHcuHtml(activePatient.nama)}</strong><br>No. RM: <strong>${escapeHcuHtml(activePatient.rm)}</strong><br><br>Belum ada riwayat perkembangan yang tersimpan di database.`, true);
