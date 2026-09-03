@@ -8,6 +8,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase Realtime untuk chat lintas perangkat -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://vmdfdslklwxmotvmditp.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_QcjwxKLMV6idSBh-hI5aBw_DZq1zfGv';
+        let supabaseClient = null;
+        if (window.supabase && SUPABASE_URL.startsWith('https://')) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        }
+    </script>
     
     <style>
         * {
@@ -2044,7 +2054,19 @@
             .hcu-login-request { width:270px; }
             .hcu-assistant-msg.bot:has(.hcu-login-request) { max-width:94%; padding:9px 11px; }
         }
-</style>
+
+        /* CHAT GABUNGAN ASISTEN + PETUGAS */
+        .unified-chat-head { padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-color); margin-bottom: 7px; }
+        .unified-chat-head strong { display:block; font-size:.82rem; color:var(--dark-text); }
+        .unified-chat-head span { display:block; margin-top:2px; font-size:.65rem; color:var(--success); }
+        .unified-chat-head span i { font-size:.5rem; }
+        .unified-chat-quick { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:7px; }
+        .unified-chat-quick button { border:1px solid var(--border-color); background:var(--card-bg); color:var(--dark-text); border-radius:999px; padding:6px 9px; font:inherit; font-size:.68rem; font-weight:600; cursor:pointer; }
+        .unified-chat-quick button:hover { border-color:var(--primary); color:var(--primary); }
+        .unified-assistant-message { align-self:flex-start; max-width:90%; padding:9px 11px; border-radius:14px; background:var(--card-bg); border:1px solid rgba(2,132,199,.22); color:var(--dark-text); font-size:.8rem; line-height:1.45; margin:7px 0; }
+        .unified-assistant-label { color:var(--primary); font-size:.67rem; font-weight:700; margin-bottom:4px; }
+        @media (max-width:768px) { .unified-chat-quick button { font-size:.64rem; padding:5px 8px; } .unified-assistant-message { max-width:94%; } }
+    </style>
 </head>
 <body data-theme="light">
 
@@ -2705,11 +2727,19 @@
                 </button>
             </div>
 
-            <!-- TAB 1: CHAT PASIEN -->
+            <!-- TAB 1: CHAT GABUNGAN ASISTEN + PETUGAS REALTIME -->
             <div id="modal-content-chat">
-                <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 0.8rem;">
-                    Hubungi dan tanyakan langsung kondisi pasien ke petugas jaga HCU:
-                </p>
+                <div class="unified-chat-head">
+                    <div>
+                        <strong><i class="fa-solid fa-comments"></i> Chat HCU Melati</strong>
+                        <span><i class="fa-solid fa-circle"></i> Asisten + Petugas Realtime</span>
+                    </div>
+                </div>
+                <div class="unified-chat-quick">
+                    <button type="button" onclick="showHcuPatientCondition()"><i class="fa-solid fa-heart-pulse"></i> Kondisi</button>
+                    <button type="button" onclick="showHcuPatientHistory()"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat</button>
+                    <button type="button" onclick="askHcuAssistant('Apa itu HCU Melati?')"><i class="fa-solid fa-robot"></i> Asisten</button>
+                </div>
                 <div class="chat-box">
                     <div class="chat-messages" id="patient-chat-messages"></div>
                     <div class="chat-input-area">
@@ -3033,6 +3063,7 @@
             const savedTheme = localStorage.getItem('hcu_theme') || 'light';
             const foundIdx = themes.findIndex(t => t.id === savedTheme);
             applyTheme(foundIdx !== -1 ? foundIdx : 0);
+            loadDatabaseFromServer();
         });
 
         // DATABASE DUMMY
@@ -3083,8 +3114,16 @@
         let databasePasien = JSON.parse(localStorage.getItem('hcu_patients')) || defaultPatients;
         let databaseChats = JSON.parse(localStorage.getItem('hcu_chats')) || defaultChats;
         let databaseHistory = JSON.parse(localStorage.getItem('hcu_history')) || [];
+        let serverDataLoaded = false;
+        let syncTimer = null;
+        let syncInProgress = false;
+        let realtimeChannel = null;
+        let realtimePollTimer = null;
+        let realtimeStarted = false;
 
         let activePatient = null;
+        let unifiedAssistantMessages = [];
+        let unifiedAssistantStarted = false;
         let currentSelectedPatientIndex = null;
         let selectedRatingValue = 0;
         let vitalsChartInstance = null;
@@ -3366,10 +3405,105 @@
             if (timeInput) timeInput.value = `${hours}:${minutes}`;
         }
 
-        function saveDatabaseToStorage() {
+        function cacheDatabaseLocally() {
             localStorage.setItem('hcu_patients', JSON.stringify(databasePasien));
             localStorage.setItem('hcu_chats', JSON.stringify(databaseChats));
             localStorage.setItem('hcu_history', JSON.stringify(databaseHistory));
+        }
+
+        function saveDatabaseToStorage() {
+            cacheDatabaseLocally();
+            if (!supabaseClient) return;
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(() => syncDatabaseToServer(), 250);
+        }
+
+        async function syncDatabaseToServer() {
+            if (!supabaseClient || syncInProgress) return false;
+            syncInProgress = true;
+            try {
+                const payload = {
+                    id: 1,
+                    patients: databasePasien,
+                    chats: databaseChats,
+                    history: databaseHistory,
+                    updated_at: new Date().toISOString()
+                };
+                const { error } = await supabaseClient.from('hcu_state').upsert(payload, { onConflict: 'id' });
+                if (error) throw error;
+                serverDataLoaded = true;
+                return true;
+            } catch (error) {
+                console.warn('Sinkronisasi Supabase gagal:', error);
+                return false;
+            } finally {
+                syncInProgress = false;
+            }
+        }
+
+        function applyServerState(data) {
+            if (!data) return;
+            databasePasien = Array.isArray(data.patients) ? data.patients : [];
+            databaseChats = data.chats && typeof data.chats === 'object' ? data.chats : {};
+            databaseHistory = Array.isArray(data.history) ? data.history : [];
+            cacheDatabaseLocally();
+            serverDataLoaded = true;
+
+            if (activePatient && activePatient.rm) {
+                const rm = cleanString(activePatient.rm);
+                const latest = databasePasien.find(p => cleanString(p.rm) === rm);
+                const history = databaseHistory.find(p => cleanString(p.rm) === rm);
+                if (latest || history) activePatient = latest || history;
+            }
+
+            if (activePatient && document.getElementById('patient-chat-review-modal')?.classList.contains('active')) {
+                renderPatientChats();
+            }
+            if (document.getElementById('nurse-chat-modal')?.classList.contains('active') && currentSelectedPatientIndex !== null) {
+                const p = databasePasien[currentSelectedPatientIndex];
+                if (p) renderNurseChats(p.rm);
+            }
+            if (document.getElementById('nurse-patient-table-body')) renderNursePatientTable();
+            if (activePatient && document.getElementById('dashboard-patient-view')?.classList.contains('active')) renderPatientDashboard();
+        }
+
+        async function refreshRealtimeState() {
+            if (!supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient.from('hcu_state').select('id, patients, chats, history, updated_at').eq('id', 1).maybeSingle();
+                if (error) throw error;
+                if (data) applyServerState(data);
+            } catch (error) {
+                console.warn('Refresh realtime gagal:', error);
+            }
+        }
+
+        function startRealtimeSync() {
+            if (!supabaseClient || realtimeStarted) return;
+            realtimeStarted = true;
+            realtimeChannel = supabaseClient.channel('hcu-state-realtime')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'hcu_state', filter: 'id=eq.1' }, payload => {
+                    if (payload.eventType !== 'DELETE' && payload.new) applyServerState(payload.new);
+                })
+                .subscribe(status => {
+                    console.log('Supabase Realtime:', status);
+                    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') refreshRealtimeState();
+                });
+            clearInterval(realtimePollTimer);
+            realtimePollTimer = setInterval(refreshRealtimeState, 5000);
+        }
+
+        async function loadDatabaseFromServer() {
+            if (!supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient.from('hcu_state').select('id, patients, chats, history, updated_at').eq('id', 1).maybeSingle();
+                if (error) throw error;
+                if (data) applyServerState(data);
+                else await syncDatabaseToServer();
+            } catch (error) {
+                console.warn('Supabase belum dapat diakses. Cache lokal digunakan:', error);
+            }
+            startRealtimeSync();
         }
 
         function cleanString(str) {
@@ -3550,25 +3684,37 @@
 
         function renderPatientChats() {
             const container = document.getElementById('patient-chat-messages');
+            if (!container) return;
             container.innerHTML = '';
-            
-            const chatList = databaseChats[activePatient.rm] || [];
-            if(chatList.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color: var(--gray-text); margin-top:2rem;">Belum ada pesan. Tulis pesan di bawah untuk menghubungi perawat.</div>`;
+            if (!activePatient) {
+                container.innerHTML = `<div style="text-align:center;color:var(--gray-text);padding:2rem 1rem;">Silakan login sebagai keluarga pasien untuk menggunakan chat petugas.</div>`;
                 return;
+            }
+
+            const chatList = databaseChats[activePatient.rm] || [];
+            if (chatList.length === 0 && unifiedAssistantMessages.length === 0) {
+                container.innerHTML = `<div style="text-align:center;color:var(--gray-text);padding:1.5rem 1rem;">Belum ada pesan. Pilih <b>Kondisi</b>, <b>Riwayat</b>, atau kirim pesan ke petugas.</div>`;
             }
 
             chatList.forEach(c => {
                 const isMe = c.sender === 'patient';
-                container.innerHTML += `
-                    <div class="chat-message ${isMe ? 'sent' : 'received'}">
-                        ${c.text}
-                        <span class="meta">${isMe ? 'Anda' : 'Perawat HCU'} • ${c.time}</span>
-                    </div>
-                `;
+                const sender = isMe ? 'Anda' : 'Perawat HCU';
+                const extra = c.time ? ` • ${escapeHcuHtml(c.time)}` : '';
+                const text = escapeHcuHtml(c.text);
+                container.innerHTML += `<div class="chat-message ${isMe ? 'sent' : 'received'}">${text}<span class="meta">${sender}${extra}</span></div>`;
+            });
+
+            unifiedAssistantMessages.forEach(m => {
+                container.innerHTML += `<div class="unified-assistant-message"><div class="unified-assistant-label"><i class="fa-solid fa-robot"></i> Asisten HCU Melati</div>${m.html}</div>`;
             });
             container.scrollTop = container.scrollHeight;
         }
+
+        function addUnifiedAssistantMessage(html) {
+            unifiedAssistantMessages.push({ html });
+            renderPatientChats();
+        }
+
 
         function sendPatientMessage() {
             const input = document.getElementById('patient-chat-input');
@@ -4023,6 +4169,8 @@
             }
             isFromHistoryView = false;
             activePatient = null;
+            unifiedAssistantMessages = [];
+            unifiedAssistantStarted = false;
             currentSelectedPatientIndex = null;
             currentLoggedInNurse = null;
             navigationHistory = ['hero-view'];
@@ -4038,16 +4186,31 @@
            pasien publik dari chatbot.
            ========================================================= */
         let hcuAssistantStarted = false;
+        let hcuPendingPatientRequest = null;
+
+        function openUnifiedChat() {
+            if (!activePatient) return false;
+            closeHcuAssistant();
+            openModalWithTab('chat');
+            if (!unifiedAssistantStarted) {
+                addUnifiedAssistantMessage(`<strong>Halo 👋</strong><br>Saya Asisten HCU Melati. Saya bisa membantu melihat <b>kondisi</b> dan <b>riwayat pasien</b>. Untuk komunikasi langsung, pesan lainnya akan dikirim ke <b>Petugas HCU</b> secara realtime.`);
+                unifiedAssistantStarted = true;
+            }
+            return true;
+        }
 
         function openHcuAssistant() {
+            if (activePatient) {
+                openUnifiedChat();
+                return;
+            }
             const backdrop = document.getElementById('hcu-assistant-backdrop');
             if (!backdrop) return;
             backdrop.classList.add('active');
             if (!hcuAssistantStarted) {
-                addHcuAssistantMessage('bot', 'Halo 👋 Saya Asisten HCU Melati. Saya dapat membantu informasi sistem. Untuk pertanyaan tentang kondisi atau riwayat pasien, saya hanya menggunakan data pasien yang sudah terverifikasi melalui login.');
+                addHcuAssistantMessage('bot', 'Halo 👋 Saya Asisten HCU Melati. Setelah data pasien terverifikasi, Asisten dan Chat Petugas akan tersedia dalam satu ruang chat.');
                 hcuAssistantStarted = true;
             }
-            setTimeout(() => document.getElementById('hcu-assistant-input')?.focus(), 100);
         }
 
         function closeHcuAssistant() {
@@ -4063,28 +4226,16 @@
             if (!box) return;
             const el = document.createElement('div');
             el.className = 'hcu-assistant-msg ' + sender;
-            if (allowHtml) el.innerHTML = text;
-            else el.textContent = text;
+            if (allowHtml) el.innerHTML = text; else el.textContent = text;
             box.appendChild(el);
             box.scrollTop = box.scrollHeight;
         }
 
-        let hcuPendingPatientRequest = null;
-
         function hcuRequirePatient(requestType = null) {
             if (activePatient) return true;
-
             hcuPendingPatientRequest = requestType;
-            addHcuAssistantMessage('bot', `
-                <div class="hcu-login-request">
-                    <div class="hcu-result-title"><i class="fa-solid fa-user-shield"></i> Verifikasi Data Pasien</div>
-                    <p>Silakan masukkan <strong>Nama Pasien</strong> dan <strong>No. RM</strong> sesuai data yang terdaftar. Setelah berhasil diverifikasi, data pasien akan langsung ditampilkan di chatbot.</p>
-                    <form class="hcu-inline-login" onsubmit="submitHcuPatientVerification(event)">
-                        <input id="hcu-patient-name" type="text" placeholder="Nama pasien" autocomplete="off" required>
-                        <input id="hcu-patient-rm" type="text" placeholder="No. RM" autocomplete="off" required>
-                        <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Verifikasi & Tampilkan</button>
-                    </form>
-                </div>`, true);
+            openHcuAssistant();
+            addHcuAssistantMessage('bot', `<div class="hcu-login-request"><div class="hcu-result-title"><i class="fa-solid fa-user-shield"></i> Verifikasi Data Pasien</div><p>Silakan masukkan <strong>Nama Pasien</strong> dan <strong>No. RM</strong> sesuai data yang terdaftar.</p><form class="hcu-inline-login" onsubmit="submitHcuPatientVerification(event)"><input id="hcu-patient-name" type="text" placeholder="Nama pasien" autocomplete="off" required><input id="hcu-patient-rm" type="text" placeholder="No. RM" autocomplete="off" required><button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Verifikasi & Tampilkan</button></form></div>`, true);
             setTimeout(() => document.getElementById('hcu-patient-name')?.focus(), 100);
             return false;
         }
@@ -4094,86 +4245,67 @@
             const name = cleanString(document.getElementById('hcu-patient-name')?.value || '');
             const rm = cleanString(document.getElementById('hcu-patient-rm')?.value || '');
             if (!name || !rm) return;
-
             const foundActive = databasePasien.find(p => cleanString(p.nama) === name && cleanString(p.rm) === rm);
             const foundHistory = databaseHistory.find(p => cleanString(p.nama) === name && cleanString(p.rm) === rm);
             const found = foundActive || foundHistory;
-
             if (!found) {
-                addHcuAssistantMessage('bot', '❌ Nama pasien dan No. RM tidak cocok dengan database. Silakan periksa kembali data yang dimasukkan.');
+                addHcuAssistantMessage('bot', '❌ Nama pasien dan No. RM tidak cocok dengan database.');
                 return;
             }
-
             activePatient = found;
-            addHcuAssistantMessage('bot', `✅ Data berhasil diverifikasi.<br><br><strong>Nama:</strong> ${escapeHcuHtml(found.nama)}<br><strong>No. RM:</strong> ${escapeHcuHtml(found.rm)}<br><br>Saya akan menampilkan data sesuai pilihan Anda.`, true);
-
+            unifiedAssistantMessages = [];
+            unifiedAssistantStarted = false;
+            closeHcuAssistant();
+            openUnifiedChat();
+            addUnifiedAssistantMessage(`✅ <strong>Data pasien terverifikasi</strong><br><strong>Nama:</strong> ${escapeHcuHtml(found.nama)}<br><strong>No. RM:</strong> ${escapeHcuHtml(found.rm)}`);
             const request = hcuPendingPatientRequest;
             hcuPendingPatientRequest = null;
             setTimeout(() => {
                 if (request === 'condition') showHcuPatientCondition(true);
                 else if (request === 'history') showHcuPatientHistory(true);
-            }, 350);
+            }, 200);
         }
 
         function showHcuPatientCondition(fromVerification = false) {
-            openHcuAssistant();
-            setTimeout(() => {
-                if (!fromVerification) addHcuAssistantMessage('user', '🩺 Kondisi pasien');
-                if (!hcuRequirePatient('condition')) return;
-                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
-                const latest = logs[0];
-                if (!latest) {
-                    addHcuAssistantMessage('bot', `📋 <strong>Data Kondisi Pasien</strong><br><br>Nama: <strong>${escapeHcuHtml(activePatient.nama)}</strong><br>No. RM: <strong>${escapeHcuHtml(activePatient.rm)}</strong><br><br>Belum ada data tanda vital/perkembangan yang tersimpan di database.`, true);
-                    return;
-                }
-                const html = `
-                    <div class="hcu-patient-result">
-                        <div class="hcu-result-title"><i class="fa-solid fa-heart-pulse"></i> Kondisi Pasien Terkini</div>
-                        <div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>
-                        <div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div>
-                        <div class="hcu-vitals-grid">
-                            <div><span>TD</span><strong>${escapeHcuHtml(latest.td)}</strong></div>
-                            <div><span>Nadi</span><strong>${escapeHcuHtml(latest.nadi)} <small>x/menit</small></strong></div>
-                            <div><span>RR</span><strong>${escapeHcuHtml(latest.rr)} <small>x/menit</small></strong></div>
-                            <div><span>SpO₂</span><strong>${escapeHcuHtml(latest.spo2)}%</strong></div>
-                            <div><span>Suhu</span><strong>${escapeHcuHtml(latest.suhu)} °C</strong></div>
-                            <div><span>Oksigen</span><strong>${escapeHcuHtml(latest.o2device)}</strong></div>
-                            <div><span>GCS</span><strong>${escapeHcuHtml(latest.gcs)}</strong></div>
-                            <div><span>DPJP</span><strong>${escapeHcuHtml(activePatient.dokter)}</strong></div>
-                        </div>
-                        <div class="hcu-result-note"><i class="fa-solid fa-clipboard-user"></i><div><b>Catatan Perawat</b><br>${escapeHcuHtml(latest.catatan)}</div></div>
-                    </div>`;
-                addHcuAssistantMessage('bot', html, true);
-            }, 100);
+            if (!activePatient) {
+                return hcuRequirePatient('condition');
+            }
+            openUnifiedChat();
+            if (!fromVerification) addUnifiedAssistantMessage('🩺 <strong>Kondisi pasien</strong>');
+            const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+            const latest = logs[0];
+            if (!latest) {
+                addUnifiedAssistantMessage(`📋 <strong>${escapeHcuHtml(activePatient.nama)}</strong> (No. RM ${escapeHcuHtml(activePatient.rm)})<br>Belum ada data tanda vital/perkembangan di database.`);
+                return;
+            }
+            addUnifiedAssistantMessage(`<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-heart-pulse"></i> Kondisi Pasien Terkini</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div><div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div><div class="hcu-vitals-grid"><div><span>TD</span><strong>${escapeHcuHtml(latest.td)}</strong></div><div><span>Nadi</span><strong>${escapeHcuHtml(latest.nadi)} <small>x/menit</small></strong></div><div><span>RR</span><strong>${escapeHcuHtml(latest.rr)} <small>x/menit</small></strong></div><div><span>SpO₂</span><strong>${escapeHcuHtml(latest.spo2)}%</strong></div><div><span>Suhu</span><strong>${escapeHcuHtml(latest.suhu)} °C</strong></div><div><span>Oksigen</span><strong>${escapeHcuHtml(latest.o2device)}</strong></div><div><span>GCS</span><strong>${escapeHcuHtml(latest.gcs)}</strong></div><div><span>DPJP</span><strong>${escapeHcuHtml(activePatient.dokter)}</strong></div></div><div class="hcu-result-note"><i class="fa-solid fa-clipboard-user"></i><div><b>Catatan Perawat</b><br>${escapeHcuHtml(latest.catatan)}</div></div></div>`);
         }
 
         function showHcuPatientHistory(fromVerification = false) {
-            openHcuAssistant();
-            setTimeout(() => {
-                if (!fromVerification) addHcuAssistantMessage('user', '📋 Riwayat pasien');
-                if (!hcuRequirePatient('history')) return;
-                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
-                if (!logs.length) {
-                    addHcuAssistantMessage('bot', `📋 <strong>Riwayat Pasien</strong><br><br>Nama: <strong>${escapeHcuHtml(activePatient.nama)}</strong><br>No. RM: <strong>${escapeHcuHtml(activePatient.rm)}</strong><br><br>Belum ada riwayat perkembangan yang tersimpan di database.`, true);
-                    return;
-                }
-                const historyHtml = logs.map((log, i) => `
-                    <div class="hcu-history-item">
-                        <div class="hcu-history-head"><strong>${i + 1}. ${escapeHcuHtml(log.datetime)}</strong><span>Shift ${escapeHcuHtml(log.shift)}</span></div>
-                        <div class="hcu-history-vitals">TD <b>${escapeHcuHtml(log.td)}</b> · Nadi <b>${escapeHcuHtml(log.nadi)}</b> · RR <b>${escapeHcuHtml(log.rr)}</b> · SpO₂ <b>${escapeHcuHtml(log.spo2)}%</b> · Suhu <b>${escapeHcuHtml(log.suhu)}°C</b> · GCS <b>${escapeHcuHtml(log.gcs)}</b></div>
-                        <div class="hcu-history-note">${escapeHcuHtml(log.catatan)}</div>
-                    </div>`).join('');
-                addHcuAssistantMessage('bot', `<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Perkembangan Pasien</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>${historyHtml}</div>`, true);
-            }, 100);
+            if (!activePatient) return hcuRequirePatient('history');
+            openUnifiedChat();
+            if (!fromVerification) addUnifiedAssistantMessage('📋 <strong>Riwayat pasien</strong>');
+            const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+            if (!logs.length) {
+                addUnifiedAssistantMessage(`📋 <strong>${escapeHcuHtml(activePatient.nama)}</strong> (No. RM ${escapeHcuHtml(activePatient.rm)})<br>Belum ada riwayat perkembangan di database.`);
+                return;
+            }
+            const historyHtml = logs.map((log, i) => `<div class="hcu-history-item"><div class="hcu-history-head"><strong>${i + 1}. ${escapeHcuHtml(log.datetime)}</strong><span>Shift ${escapeHcuHtml(log.shift)}</span></div><div class="hcu-history-vitals">TD <b>${escapeHcuHtml(log.td)}</b> · Nadi <b>${escapeHcuHtml(log.nadi)}</b> · RR <b>${escapeHcuHtml(log.rr)}</b> · SpO₂ <b>${escapeHcuHtml(log.spo2)}%</b> · Suhu <b>${escapeHcuHtml(log.suhu)}°C</b> · GCS <b>${escapeHcuHtml(log.gcs)}</b></div><div class="hcu-history-note">${escapeHcuHtml(log.catatan)}</div></div>`).join('');
+            addUnifiedAssistantMessage(`<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Perkembangan Pasien</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>${historyHtml}</div>`);
         }
 
         function askHcuAssistant(question) {
+            if (activePatient) {
+                openUnifiedChat();
+                addUnifiedAssistantMessage(`🤖 <strong>${escapeHcuHtml(question)}</strong>`);
+                setTimeout(() => addUnifiedAssistantMessage(escapeHcuHtml(getHcuAssistantAnswer(question))), 150);
+                return;
+            }
             openHcuAssistant();
             setTimeout(() => {
                 addHcuAssistantMessage('user', question);
-                const answer = getHcuAssistantAnswer(question);
-                setTimeout(() => addHcuAssistantMessage('bot', answer), 250);
-            }, 120);
+                addHcuAssistantMessage('bot', getHcuAssistantAnswer(question));
+            }, 80);
         }
 
         function sendHcuAssistant() {
@@ -4181,66 +4313,23 @@
             if (!input) return;
             const question = input.value.trim();
             if (!question) return;
-            openHcuAssistant();
-            addHcuAssistantMessage('user', question);
             input.value = '';
-            const answer = getHcuAssistantAnswer(question);
-            setTimeout(() => addHcuAssistantMessage('bot', answer), 250);
+            if (activePatient) {
+                openUnifiedChat();
+                addUnifiedAssistantMessage(`🤖 <strong>${escapeHcuHtml(question)}</strong>`);
+                setTimeout(() => addUnifiedAssistantMessage(escapeHcuHtml(getHcuAssistantAnswer(question))), 150);
+                return;
+            }
+            addHcuAssistantMessage('user', question);
+            addHcuAssistantMessage('bot', getHcuAssistantAnswer(question));
         }
 
         function getHcuAssistantAnswer(question) {
             const q = cleanString(question);
-            const wantsCondition = /kondisi|keadaan|tanda vital|terkini|sekarang|saat ini|terbaru|spo2|saturasi|tekanan darah|nadi|napas|suhu|gcs/.test(q);
-            const wantsHistory = /riwayat|histori|perkembangan|catatan|rekam|sebelumnya/.test(q);
-
-            /* Pertanyaan tentang pasien wajib memakai activePatient.
-               activePatient hanya terisi setelah login terverifikasi. */
-            if (wantsCondition || wantsHistory) {
-                if (!activePatient) {
-                    return 'Untuk menjaga kerahasiaan data pasien, saya tidak dapat menampilkan kondisi atau riwayat pasien dari halaman awal. Silakan pilih “Masuk ke Sistem” dan login sebagai keluarga pasien terlebih dahulu. Setelah identitas terverifikasi, data yang ditampilkan akan mengikuti database pasien.';
-                }
-
-                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
-
-                if (wantsHistory) {
-                    if (!logs.length) {
-                        return 'Pasien ' + activePatient.nama + ' (No. RM ' + activePatient.rm + ') belum memiliki catatan perkembangan pada database.';
-                    }
-                    const history = logs.slice(0, 5).map((log, i) => {
-                        return (i + 1) + '. ' + (log.datetime || '-') + ' — Shift ' + (log.shift || '-') + '\n' +
-                            '   TD ' + (log.td || '-') + ' | Nadi ' + (log.nadi || '-') + ' | RR ' + (log.rr || '-') + ' | SpO₂ ' + (log.spo2 || '-') + ' | Suhu ' + (log.suhu || '-') + ' | GCS ' + (log.gcs || '-') + '\n' +
-                            '   Catatan: ' + (log.catatan || '-');
-                    }).join('\n\n');
-                    return 'Riwayat terbaru pasien ' + activePatient.nama + ' (No. RM ' + activePatient.rm + '):\n\n' + history;
-                }
-
-                const latest = logs[0];
-                if (!latest) {
-                    return 'Pasien ' + activePatient.nama + ' (No. RM ' + activePatient.rm + ') belum memiliki data tanda vital pada database.';
-                }
-                return 'Data kondisi terbaru pasien ' + activePatient.nama + ' (No. RM ' + activePatient.rm + '):\n' +
-                    '• Waktu: ' + (latest.datetime || '-') + '\n' +
-                    '• Shift: ' + (latest.shift || '-') + '\n' +
-                    '• Tekanan darah: ' + (latest.td || '-') + '\n' +
-                    '• Nadi: ' + (latest.nadi || '-') + ' kali/menit\n' +
-                    '• RR: ' + (latest.rr || '-') + ' kali/menit\n' +
-                    '• SpO₂: ' + (latest.spo2 || '-') + '%\n' +
-                    '• Suhu: ' + (latest.suhu || '-') + ' °C\n' +
-                    '• Oksigen: ' + (latest.o2device || '-') + '\n' +
-                    '• GCS: ' + (latest.gcs || '-') + '\n' +
-                    '• Catatan: ' + (latest.catatan || '-');
-            }
-
-            if (/apa itu hcu|tentang hcu|hcu melati/.test(q)) {
-                return 'HCU (High Care Unit) adalah unit perawatan untuk pasien yang membutuhkan pemantauan lebih intensif dibanding ruang rawat biasa. HCU Melati Smart Care Connect membantu keluarga dan petugas mengakses informasi sesuai hak akses.';
-            }
-            if (/cara menggunakan|gunakan sistem|cara login|login/.test(q)) {
-                return 'Pilih “Masuk ke Sistem”, kemudian pilih Keluarga Pasien atau Petugas HCU. Keluarga pasien melakukan verifikasi menggunakan Nama dan No. RM yang sesuai dengan database.';
-            }
-            if (/kontak|hubungi|informasi/.test(q)) {
-                return 'Untuk informasi dan kontak HCU Melati, silakan buka menu “Kontak & Informasi” pada bagian atas halaman.';
-            }
-            return 'Saya dapat membantu tentang HCU Melati, cara menggunakan sistem, kondisi pasien terbaru, dan riwayat perkembangan pasien. Untuk data pasien, silakan login terlebih dahulu agar informasi mengikuti database pasien yang terverifikasi.';
+            if (/apa itu hcu|tentang hcu|hcu melati/.test(q)) return 'HCU (High Care Unit) adalah unit perawatan untuk pasien yang membutuhkan pemantauan lebih intensif dibanding ruang rawat biasa.';
+            if (/cara menggunakan|gunakan sistem|cara login|login/.test(q)) return 'Pilih “Masuk ke Sistem”, kemudian pilih Keluarga Pasien atau Petugas HCU. Keluarga pasien melakukan verifikasi menggunakan Nama dan No. RM.';
+            if (/kontak|hubungi|informasi/.test(q)) return 'Untuk informasi dan kontak HCU Melati, silakan buka menu “Kontak & Informasi”.';
+            return 'Saya dapat membantu informasi umum HCU, kondisi pasien, riwayat perkembangan, atau komunikasi dengan petugas HCU.';
         }
 
     </script>
