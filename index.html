@@ -4362,9 +4362,62 @@
                 const latest = logs[0];
                 if (!latest) {
                     addUnifiedAssistantMessage(`📋 <strong>${escapeHcuHtml(activePatient.nama)}</strong> (No. RM ${escapeHcuHtml(activePatient.rm)})<br>Belum ada data tanda vital/perkembangan di database.`);
+                    addUnifiedBackToPetugasButton();
                     return;
                 }
-                addUnifiedAssistantMessage(`<div class="hcu-patient-result"><div class="hcu-result-title"><i class="fa-solid fa-heart-pulse"></i> Kondisi Pasien Terkini</div><div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div><div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div><div class="hcu-vitals-grid"><div><span>TD</span><strong>${escapeHcuHtml(latest.td)}</strong></div><div><span>Nadi</span><strong>${escapeHcuHtml(latest.nadi)} <small>x/menit</small></strong></div><div><span>RR</span><strong>${escapeHcuHtml(latest.rr)} <small>x/menit</small></strong></div><div><span>SpO₂</span><strong>${escapeHcuHtml(latest.spo2)}%</strong></div><div><span>Suhu</span><strong>${escapeHcuHtml(latest.suhu)} °C</strong></div><div><span>Oksigen</span><strong>${escapeHcuHtml(latest.o2device)}</strong></div><div><span>GCS</span><strong>${escapeHcuHtml(latest.gcs)}</strong></div><div><span>DPJP</span><strong>${escapeHcuHtml(activePatient.dokter)}</strong></div></div><div class="hcu-result-note"><i class="fa-solid fa-clipboard-user"></i><div><b>Catatan Perawat</b><br>${escapeHcuHtml(latest.catatan)}</div></div></div>`);
+
+                // TTV ditampilkan satu per satu melalui pilihan chat agar keluarga
+                // dapat menanyakan TD, HR/Nadi, RR, Suhu, SpO₂, Alat O2, dan GCS secara terpisah.
+                addUnifiedAssistantMessage(`
+                    <div class="hcu-patient-result">
+                        <div class="hcu-result-title"><i class="fa-solid fa-heart-pulse"></i> TTV Pasien</div>
+                        <div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>
+                        <div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div>
+                        <p style="margin:.65rem 0 .5rem;color:var(--gray-text);font-size:.85rem;">Silakan pilih TTV yang ingin diketahui:</p>
+                        <div class="hcu-tvt-chat-options" style="display:flex;flex-wrap:wrap;gap:7px;">
+                            <button type="button" onclick="askPatientVital('td','🩸 Tekanan Darah')">🩸 TD</button>
+                            <button type="button" onclick="askPatientVital('nadi','❤️ HR / Nadi')">❤️ HR / Nadi</button>
+                            <button type="button" onclick="askPatientVital('rr','🫁 RR')">🫁 RR</button>
+                            <button type="button" onclick="askPatientVital('suhu','🌡️ Suhu')">🌡️ Suhu</button>
+                            <button type="button" onclick="askPatientVital('spo2','💧 SpO₂')">💧 SpO₂</button>
+                            <button type="button" onclick="askPatientVital('o2device','🫧 Alat O2')">🫧 Alat O2</button>
+                            <button type="button" onclick="askPatientVital('gcs','🧠 GCS')">🧠 GCS</button>
+                        </div>
+                    </div>`);
+                addUnifiedBackToPetugasButton();
+            }, 650);
+        }
+
+        function askPatientVital(type, label) {
+            if (!activePatient) return hcuRequirePatient('condition');
+            const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+            const latest = logs[0];
+            if (!latest) {
+                addUnifiedUserAction(label);
+                addUnifiedAssistantMessage('Belum ada data TTV pasien pada database.');
+                return;
+            }
+
+            addUnifiedUserAction(label);
+            const typing = showUnifiedTyping();
+            setTimeout(() => {
+                if (typing) typing.remove();
+                const values = {
+                    td: { title: 'Tekanan Darah (TD)', value: latest.td || '-', unit: 'mmHg', icon: '🩸' },
+                    nadi: { title: 'Heart Rate / Nadi (HR)', value: latest.nadi || '-', unit: 'kali/menit', icon: '❤️' },
+                    rr: { title: 'Respiratory Rate (RR)', value: latest.rr || '-', unit: 'kali/menit', icon: '🫁' },
+                    suhu: { title: 'Suhu Tubuh (S)', value: latest.suhu || '-', unit: '°C', icon: '🌡️' },
+                    spo2: { title: 'Saturasi Oksigen (SpO₂)', value: latest.spo2 || '-', unit: '%', icon: '💧' },
+                    o2device: { title: 'Alat / Terapi Oksigen', value: latest.o2device || '-', unit: '', icon: '🫧' },
+                    gcs: { title: 'Glasgow Coma Scale (GCS)', value: latest.gcs || '-', unit: '', icon: '🧠' }
+                };
+                const item = values[type] || { title: 'TTV', value: '-', unit: '', icon: '📋' };
+                addUnifiedAssistantMessage(`
+                    <div class="hcu-patient-result">
+                        <div class="hcu-result-title">${item.icon} ${item.title}</div>
+                        <div style="font-size:1.35rem;font-weight:800;color:var(--primary-dark);margin:.45rem 0;">${escapeHcuHtml(item.value)} ${escapeHcuHtml(item.unit)}</div>
+                        <div class="hcu-result-meta">Data terakhir: ${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div>
+                    </div>`);
                 addUnifiedBackToPetugasButton();
             }, 650);
         }
@@ -4432,10 +4485,37 @@
 
         function getHcuAssistantAnswer(question) {
             const q = cleanString(question);
+            if (activePatient) {
+                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+                const latest = logs[0];
+                if (latest) {
+                    if (/^(td|tekanan darah|tensi|blood pressure)$/.test(q) || /tekanan darah/.test(q)) {
+                        return `🩸 Tekanan darah pasien <strong>${escapeHcuHtml(activePatient.nama)}</strong> saat ini adalah <strong>${escapeHcuHtml(latest.td || '-')}</strong> mmHg.`;
+                    }
+                    if (/^(hr|heart rate|nadi|denyut nadi)$/.test(q) || /heart rate|denyut nadi|nadi/.test(q)) {
+                        return `❤️ Heart Rate / Nadi pasien <strong>${escapeHcuHtml(activePatient.nama)}</strong> adalah <strong>${escapeHcuHtml(latest.nadi || '-')}</strong> kali/menit.`;
+                    }
+                    if (/^(rr|respiratory rate|frekuensi napas|napas)$/.test(q) || /respiratory rate|frekuensi napas/.test(q)) {
+                        return `🫁 Respiratory Rate pasien <strong>${escapeHcuHtml(activePatient.nama)}</strong> adalah <strong>${escapeHcuHtml(latest.rr || '-')}</strong> kali/menit.`;
+                    }
+                    if (/^(s|suhu|temperatur|temperature)$/.test(q) || /suhu tubuh|temperatur/.test(q)) {
+                        return `🌡️ Suhu tubuh pasien <strong>${escapeHcuHtml(activePatient.nama)}</strong> adalah <strong>${escapeHcuHtml(latest.suhu || '-')}</strong> °C.`;
+                    }
+                    if (/^(spo2|spo₂|saturasi|saturasi oksigen)$/.test(q) || /saturasi oksigen/.test(q)) {
+                        return `💧 SpO₂ pasien <strong>${escapeHcuHtml(activePatient.nama)}</strong> adalah <strong>${escapeHcuHtml(latest.spo2 || '-')}</strong>%.`;
+                    }
+                    if (/^(o2|alat o2|oksigen|terapi oksigen)$/.test(q) || /alat oksigen|terapi oksigen/.test(q)) {
+                        return `🫧 Alat/terapi oksigen pasien <strong>${escapeHcuHtml(activePatient.nama)}</strong> adalah <strong>${escapeHcuHtml(latest.o2device || '-')}</strong>.`;
+                    }
+                    if (/^(gcs|glasgow coma scale|kesadaran)$/.test(q) || /glasgow coma scale/.test(q)) {
+                        return `🧠 GCS/kondisi kesadaran pasien <strong>${escapeHcuHtml(activePatient.nama)}</strong> adalah <strong>${escapeHcuHtml(latest.gcs || '-')}</strong>.`;
+                    }
+                }
+            }
             if (/apa itu hcu|tentang hcu|hcu melati/.test(q)) return 'HCU (High Care Unit) adalah unit perawatan untuk pasien yang membutuhkan pemantauan lebih intensif dibanding ruang rawat biasa.';
             if (/cara menggunakan|gunakan sistem|cara login|login/.test(q)) return 'Pilih “Masuk ke Sistem”, kemudian pilih Keluarga Pasien atau Petugas HCU. Keluarga pasien melakukan verifikasi menggunakan Nama dan No. RM.';
             if (/kontak|hubungi|informasi/.test(q)) return 'Untuk informasi dan kontak HCU Melati, silakan buka menu “Kontak & Informasi”.';
-            return 'Saya dapat membantu informasi umum HCU, kondisi pasien, riwayat perkembangan, atau komunikasi dengan petugas HCU.';
+            return 'Saya dapat membantu informasi umum HCU, kondisi pasien, riwayat perkembangan, atau TTV pasien satu per satu seperti TD, HR/Nadi, RR, Suhu, SpO₂, Alat O2, dan GCS.';
         }
 
     </script>
