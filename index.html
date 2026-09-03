@@ -2027,13 +2027,23 @@
 }
 
     
-        .hcu-login-request { line-height: 1.55; }
-        .hcu-login-request p { margin: 8px 0 12px; }
-        .hcu-inline-login { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-        .hcu-inline-login input { width:100%; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; font:inherit; background:var(--card-bg); color:var(--dark-text); outline:none; }
-        .hcu-inline-login input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,150,199,.12); }
-        .hcu-inline-login button { border:0; border-radius:10px; padding:10px 12px; font:inherit; font-weight:700; cursor:pointer; background:var(--primary); color:#fff; }
+        /* Form verifikasi super-compact: tinggi mengikuti isi dan tanpa whitespace template */
+        .hcu-assistant-msg:has(.hcu-login-request) { white-space:normal; }
+        .hcu-login-request { line-height:1.35; width:300px; max-width:100%; white-space:normal; }
+        .hcu-login-request .hcu-result-title { margin:0 0 5px; font-size:.82rem; line-height:1.25; }
+        .hcu-login-request p { margin:4px 0 7px; font-size:.72rem; line-height:1.4; }
+        .hcu-inline-login { display:flex; flex-direction:column; gap:5px; margin:5px 0 0; }
+        .hcu-inline-login input { width:100%; height:34px; border:1px solid var(--border-color); border-radius:8px; padding:6px 9px; font:inherit; font-size:.76rem; background:var(--card-bg); color:var(--dark-text); outline:none; box-sizing:border-box; }
+        .hcu-inline-login input:focus { border-color:var(--primary); box-shadow:0 0 0 2px rgba(0,150,199,.12); }
+        .hcu-inline-login button { width:100%; min-height:34px; height:34px; border:0; border-radius:8px; padding:5px 9px; font:inherit; font-size:.74rem; font-weight:700; cursor:pointer; background:var(--primary); color:#fff; }
         .hcu-inline-login button:hover { filter:brightness(.96); }
+        @media (min-width:769px) {
+            .hcu-assistant-msg.bot:has(.hcu-login-request) { max-width:70%; padding:9px 11px; }
+        }
+        @media (max-width:768px) {
+            .hcu-login-request { width:270px; }
+            .hcu-assistant-msg.bot:has(.hcu-login-request) { max-width:94%; padding:9px 11px; }
+        }
 </style>
 </head>
 <body data-theme="light">
