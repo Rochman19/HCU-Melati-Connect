@@ -1210,72 +1210,6 @@
             .dash-card, .vital-card { box-shadow: none !important; border: 1px solid #ccc !important; }
         }
 
-
-        /* =========================================================
-           ASISTEN HCU MELATI - CHATBOT
-           ========================================================= */
-        .assistant-card {
-            background: linear-gradient(135deg, var(--card-bg), rgba(2,132,199,0.05));
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.1rem 1.25rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.04);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-        }
-        .assistant-card-info { display:flex; align-items:center; gap:12px; min-width:0; }
-        .assistant-icon {
-            width:48px; height:48px; border-radius:14px; flex-shrink:0;
-            display:flex; align-items:center; justify-content:center;
-            color:white; font-size:1.25rem;
-            background:linear-gradient(135deg,var(--primary),var(--secondary));
-            box-shadow:0 8px 18px rgba(2,132,199,.2);
-        }
-        .assistant-card h3 { margin:0 0 3px; color:var(--dark-text); font-size:1rem; }
-        .assistant-card p { margin:0; color:var(--gray-text); font-size:.82rem; line-height:1.45; }
-        .btn-assistant-open {
-            flex-shrink:0; border:none; cursor:pointer; color:white;
-            background:linear-gradient(135deg,var(--primary),var(--secondary));
-            padding:.7rem 1rem; border-radius:11px; font-weight:700;
-            display:inline-flex; align-items:center; gap:8px;
-        }
-        .btn-assistant-open:hover { transform:translateY(-2px); box-shadow:0 8px 18px rgba(2,132,199,.2); }
-        .assistant-modal-dialog {
-            background:var(--card-bg); color:var(--dark-text); width:min(92%,520px);
-            max-height:85vh; border-radius:20px; overflow:hidden; position:relative;
-            box-shadow:0 25px 60px rgba(0,0,0,.25); border:1px solid var(--border-color);
-            display:flex; flex-direction:column;
-        }
-        .assistant-header { padding:1rem 1.1rem; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border-color); background:linear-gradient(135deg,rgba(2,132,199,.08),rgba(13,148,136,.06)); }
-        .assistant-header-icon { width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff; }
-        .assistant-header-text { flex:1; min-width:0; }
-        .assistant-header-text strong { display:block; font-size:.98rem; }
-        .assistant-header-text span { display:block; font-size:.72rem; color:var(--gray-text); margin-top:2px; }
-        .assistant-close { position:static; margin-left:auto; border:none; background:transparent; color:var(--gray-text); font-size:1.2rem; cursor:pointer; padding:6px; }
-        .assistant-messages { flex:1; min-height:320px; max-height:52vh; overflow-y:auto; padding:1rem; background:var(--chat-bg); display:flex; flex-direction:column; gap:10px; }
-        .assistant-msg { max-width:84%; padding:10px 13px; border-radius:15px; font-size:.84rem; line-height:1.5; word-break:break-word; }
-        .assistant-msg.bot { align-self:flex-start; background:var(--card-bg); border:1px solid var(--border-color); border-bottom-left-radius:4px; }
-        .assistant-msg.user { align-self:flex-end; background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
-        .assistant-msg .msg-time { display:block; font-size:.65rem; opacity:.65; margin-top:4px; text-align:right; }
-        .assistant-quick { padding:9px 10px; display:flex; gap:7px; flex-wrap:wrap; background:var(--card-bg); border-top:1px solid var(--border-color); }
-        .assistant-quick button { border:1px solid var(--border-color); background:var(--bg-color); color:var(--dark-text); border-radius:20px; padding:6px 10px; font-size:.72rem; cursor:pointer; }
-        .assistant-quick button:hover { border-color:var(--primary); color:var(--primary); }
-        .assistant-input { display:flex; gap:8px; padding:10px; background:var(--card-bg); border-top:1px solid var(--border-color); }
-        .assistant-input input { flex:1; min-width:0; border:1px solid var(--border-color); background:var(--card-bg); color:var(--dark-text); border-radius:22px; padding:10px 13px; outline:none; font-size:.85rem; }
-        .assistant-input input:focus { border-color:var(--primary); }
-        .assistant-send { width:42px;height:42px;border-radius:50%;border:none;background:var(--primary);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-        @media (max-width:768px) {
-            .assistant-card { align-items:stretch; flex-direction:column; padding:1rem; }
-            .assistant-card-info { align-items:flex-start; }
-            .btn-assistant-open { width:100%; justify-content:center; }
-            .assistant-modal-dialog { width:96%; max-height:90vh; border-radius:16px; }
-            .assistant-messages { min-height:300px; max-height:58vh; }
-            .assistant-msg { max-width:90%; }
-        }
-
         /* =========================================================
            RESPONSIVE MOBILE - PERAPIHAN TAMPILAN SMARTPHONE
            ========================================================= */
@@ -1924,6 +1858,152 @@
             }
         }
 
+
+
+/* =========================================================
+   ASISTEN HCU - CHATBOT DI DASHBOARD AWAL
+   ========================================================= */
+.hcu-assistant-card {
+    margin: 2.5rem auto 0;
+    max-width: 760px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 22px;
+    padding: 1.2rem;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.07);
+    text-align: left;
+}
+.hcu-assistant-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: .9rem;
+}
+.hcu-assistant-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+.hcu-assistant-title { font-weight: 700; color: var(--dark-text); }
+.hcu-assistant-subtitle { color: var(--gray-text); font-size: .78rem; margin-top: 2px; }
+.hcu-assistant-open {
+    margin-left: auto;
+    border: 0;
+    border-radius: 12px;
+    padding: .65rem 1rem;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+.hcu-assistant-open:hover { transform: translateY(-2px); }
+.hcu-assistant-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.hcu-assistant-quick button {
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--dark-text);
+    border-radius: 999px;
+    padding: .55rem .8rem;
+    font-size: .78rem;
+    cursor: pointer;
+}
+.hcu-assistant-quick button:hover { border-color: var(--primary); color: var(--primary); }
+
+.hcu-assistant-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .42);
+    backdrop-filter: blur(3px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+.hcu-assistant-backdrop.active { display: flex; }
+.hcu-assistant-window {
+    width: min(560px, 100%);
+    max-height: min(720px, 90vh);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 22px;
+    box-shadow: 0 25px 70px rgba(15, 23, 42, .22);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.hcu-assistant-window-head {
+    padding: 14px 16px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.hcu-assistant-window-head strong { flex: 1; }
+.hcu-assistant-close {
+    width: 36px; height: 36px; border: 0; border-radius: 50%;
+    background: rgba(255,255,255,.16); color: #fff; cursor: pointer;
+}
+.hcu-assistant-messages {
+    flex: 1;
+    min-height: 330px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding: 14px;
+    background: var(--chat-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.hcu-assistant-msg {
+    max-width: 88%;
+    padding: 10px 13px;
+    border-radius: 15px;
+    font-size: .86rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.hcu-assistant-msg.bot { align-self: flex-start; background: var(--card-bg); color: var(--dark-text); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
+.hcu-assistant-msg.user { align-self: flex-end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+.hcu-assistant-input {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    border-top: 1px solid var(--border-color);
+    background: var(--card-bg);
+}
+.hcu-assistant-input input {
+    flex: 1; min-width: 0; border: 1px solid var(--border-color);
+    border-radius: 22px; padding: 10px 13px; outline: none;
+    background: var(--bg-color); color: var(--dark-text); font-size: .86rem;
+}
+.hcu-assistant-input button {
+    width: 42px; height: 42px; border: 0; border-radius: 50%;
+    background: var(--primary); color: #fff; cursor: pointer; flex-shrink: 0;
+}
+@media (max-width: 768px) {
+    .hcu-assistant-card { margin-top: 1.5rem; padding: 1rem; border-radius: 18px; }
+    .hcu-assistant-card-head { align-items: flex-start; }
+    .hcu-assistant-open { padding: .55rem .75rem; font-size: .76rem; }
+    .hcu-assistant-quick button { font-size: .74rem; }
+    .hcu-assistant-backdrop { padding: 8px; }
+    .hcu-assistant-window { width: 100%; height: min(92vh, 680px); max-height: 92vh; border-radius: 18px; }
+    .hcu-assistant-messages { min-height: 0; max-height: none; }
+}
+
     </style>
 </head>
 <body data-theme="light">
@@ -2012,6 +2092,26 @@
                         <i class="fa-solid fa-shield-cat"></i>
                         <h3>Aman & Terjaga</h3>
                         <p>Akses data pasien terbatas dan terlindungi dengan verifikasi No. RM.</p>
+                    </div>
+                </div>
+
+                <!-- ASISTEN HCU: hanya ditampilkan pada dashboard awal -->
+                <div class="hcu-assistant-card hero-animate delay-5">
+                    <div class="hcu-assistant-card-head">
+                        <div class="hcu-assistant-icon"><i class="fa-solid fa-robot"></i></div>
+                        <div>
+                            <div class="hcu-assistant-title">Asisten HCU Melati</div>
+                            <div class="hcu-assistant-subtitle">Tanya informasi sistem atau kondisi pasien setelah login.</div>
+                        </div>
+                        <button class="hcu-assistant-open" type="button" onclick="openHcuAssistant()">
+                            <i class="fa-solid fa-comments"></i> Buka Chat
+                        </button>
+                    </div>
+                    <div class="hcu-assistant-quick">
+                        <button type="button" onclick="askHcuAssistant('Apa itu HCU Melati?')">🏥 Apa itu HCU?</button>
+                        <button type="button" onclick="askHcuAssistant('Bagaimana cara menggunakan sistem?')">📖 Cara menggunakan sistem</button>
+                        <button type="button" onclick="askHcuAssistant('Bagaimana kondisi pasien saya saat ini?')">🩺 Kondisi pasien</button>
+                        <button type="button" onclick="askHcuAssistant('Tampilkan riwayat pasien saya')">📋 Riwayat pasien</button>
                     </div>
                 </div>
             </section>
@@ -2240,17 +2340,6 @@
                     </div>
                 </div>
 
-                <div class="assistant-card">
-                    <div class="assistant-card-info">
-                        <div class="assistant-icon"><i class="fa-solid fa-robot"></i></div>
-                        <div>
-                            <h3>Asisten HCU Melati</h3>
-                            <p>Tanyakan cara menggunakan sistem dan informasi umum layanan HCU.</p>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-assistant-open" onclick="openHcuAssistant()"><i class="fa-solid fa-comments"></i> Tanya Asisten</button>
-                </div>
-
                 <h3 style="margin-bottom: 1rem; text-align: left;">Pemantauan Tanda Vital Terkini</h3>
                 <div class="vitals-grid">
                     <div class="vital-card success">
@@ -2306,17 +2395,6 @@
                         <span style="color: var(--gray-text); font-size: 0.9rem;" id="logged-nurse-label"><span class="live-dot"></span> Petugas Jaga: -</span>
                     </div>
                     <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
-                </div>
-
-                <div class="assistant-card">
-                    <div class="assistant-card-info">
-                        <div class="assistant-icon"><i class="fa-solid fa-robot"></i></div>
-                        <div>
-                            <h3>Asisten HCU Melati</h3>
-                            <p>Bantuan cepat untuk penggunaan Smart Care Connect dan informasi umum HCU.</p>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-assistant-open" onclick="openHcuAssistant()"><i class="fa-solid fa-comments"></i> Tanya Asisten</button>
                 </div>
 
                 <div class="nurse-quick-actions">
@@ -2552,32 +2630,6 @@
                 <i class="fa-solid fa-comments"></i>
             </button>
             <span class="fab-tooltip" id="fab-tooltip-text">Chat & Ulasan Jaga</span>
-        </div>
-    </div>
-
-    <!-- MODAL ASISTEN HCU MELATI -->
-    <div class="modal-backdrop" id="hcu-assistant-modal" onclick="if(event.target===this) closeHcuAssistant()">
-        <div class="assistant-modal-dialog">
-            <div class="assistant-header">
-                <div class="assistant-header-icon"><i class="fa-solid fa-robot"></i></div>
-                <div class="assistant-header-text">
-                    <strong>Asisten HCU Melati</strong>
-                    <span>Asisten informasi Smart Care Connect</span>
-                </div>
-                <button class="assistant-close" onclick="closeHcuAssistant()" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="assistant-messages" id="hcu-assistant-messages"></div>
-            <div class="assistant-quick">
-                <button onclick="askHcuAssistant('Apa itu HCU?')">Apa itu HCU?</button>
-                <button onclick="askHcuAssistant('Bagaimana cara menggunakan sistem?')">Cara menggunakan sistem</button>
-                <button onclick="askHcuAssistant('Bagaimana melihat kondisi pasien?')">Melihat kondisi pasien</button>
-                <button onclick="askHcuAssistant('Bagaimana melihat riwayat pasien?')">Riwayat pasien</button>
-                <button onclick="askHcuAssistant('Bagaimana menghubungi perawat?')">Hubungi perawat</button>
-            </div>
-            <div class="assistant-input">
-                <input id="hcu-assistant-input" type="text" placeholder="Tulis pertanyaan..." autocomplete="off" onkeydown="if(event.key==='Enter') sendHcuAssistant()">
-                <button class="assistant-send" onclick="sendHcuAssistant()" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
         </div>
     </div>
 
@@ -3924,75 +3976,6 @@
             });
         }
 
-        /* -------------------------------------------------------------
-           ASISTEN HCU MELATI - CHATBOT INFORMASI LOKAL
-           Tidak mengakses atau mengubah data medis pasien.
-        ------------------------------------------------------------- */
-        const hcuAssistantAnswers = [
-            { keys: ['apa itu hcu', 'hcu itu', 'pengertian hcu'], answer: 'HCU (High Care Unit) adalah unit perawatan untuk pasien yang membutuhkan pemantauan lebih intensif dibanding ruang rawat biasa, tetapi belum tentu memerlukan perawatan ICU.' },
-            { keys: ['cara menggunakan sistem', 'menggunakan sistem', 'cara pakai', 'petunjuk penggunaan', 'bagaimana menggunakan'], answer: 'Untuk menggunakan Smart Care Connect, pilih menu sesuai kebutuhan. Keluarga pasien dapat masuk ke Dashboard Pasien, sedangkan petugas/perawat menggunakan Portal Perawat HCU Melati.' },
-            { keys: ['melihat kondisi pasien', 'kondisi pasien', 'tanda vital', 'ttv', 'vital pasien'], answer: 'Pada Dashboard Pasien, informasi tanda vital terkini ditampilkan pada kartu pemantauan. Riwayat perkembangan kondisi juga tersedia pada bagian riwayat perkembangan pasien.' },
-            { keys: ['riwayat pasien', 'riwayat perkembangan', 'timeline', 'histori pasien'], answer: 'Riwayat perkembangan pasien dapat dilihat pada bagian “Riwayat Perkembangan Kondisi Pasien”. Catatan disusun berdasarkan waktu/shift dan berisi data pemantauan yang dimasukkan petugas.' },
-            { keys: ['hubungi perawat', 'kontak perawat', 'chat perawat', 'tanya perawat', 'petugas jaga'], answer: 'Untuk komunikasi langsung, gunakan fitur “Chat Petugas” atau “Buka Chat Keluarga” yang tersedia pada sistem sesuai hak akses Anda.' },
-            { keys: ['cetak laporan', 'print laporan', 'cetak'], answer: 'Pada Dashboard Pasien tersedia tombol “Cetak Laporan”. Tombol tersebut dapat digunakan untuk mencetak atau menyimpan laporan melalui dialog cetak browser.' },
-            { keys: ['password', 'kata sandi', 'lupa password', 'lupa sandi'], answer: 'Untuk keamanan, jangan membagikan kata sandi melalui chatbot. Jika lupa kredensial, hubungi petugas/admin yang mengelola akses sistem HCU Melati.' },
-            { keys: ['kontak', 'alamat', 'informasi hcu'], answer: 'Untuk informasi kontak dan layanan HCU Melati, buka menu “Kontak & Informasi” pada halaman utama.' }
-        ];
-
-        function openHcuAssistant() {
-            const modal = document.getElementById('hcu-assistant-modal');
-            const box = document.getElementById('hcu-assistant-messages');
-            if (!modal || !box) return;
-            modal.classList.add('active');
-            if (!box.dataset.initialized) {
-                addHcuAssistantMessage('bot', 'Halo! 👋 Saya Asisten HCU Melati. Saya dapat membantu menjelaskan penggunaan Smart Care Connect dan informasi umum layanan HCU. Silakan pilih pertanyaan atau ketik pertanyaan Anda.', false);
-                box.dataset.initialized = '1';
-            }
-            setTimeout(() => document.getElementById('hcu-assistant-input')?.focus(), 150);
-        }
-
-        function closeHcuAssistant() {
-            document.getElementById('hcu-assistant-modal')?.classList.remove('active');
-        }
-
-        function addHcuAssistantMessage(sender, text, scroll = true) {
-            const box = document.getElementById('hcu-assistant-messages');
-            if (!box) return;
-            const el = document.createElement('div');
-            el.className = `assistant-msg ${sender}`;
-            const safeText = String(text).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-            const now = new Date();
-            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            el.innerHTML = `${safeText}<span class="msg-time">${time}</span>`;
-            box.appendChild(el);
-            if (scroll) box.scrollTop = box.scrollHeight;
-        }
-
-        function getHcuAssistantAnswer(question) {
-            const q = cleanString(question);
-            if (!q) return 'Silakan tuliskan pertanyaan yang ingin Anda tanyakan.';
-            for (const item of hcuAssistantAnswers) {
-                if (item.keys.some(k => q.includes(k))) return item.answer;
-            }
-            if (q.includes('terima kasih') || q.includes('makasih')) return 'Sama-sama. Semoga Asisten HCU Melati membantu. 😊';
-            return 'Maaf, saya belum memahami pertanyaan tersebut. Coba tanyakan tentang cara menggunakan sistem, tanda vital, riwayat pasien, cetak laporan, chat petugas, atau kontak & informasi HCU Melati.';
-        }
-
-        function askHcuAssistant(question) {
-            openHcuAssistant();
-            addHcuAssistantMessage('user', question);
-            setTimeout(() => addHcuAssistantMessage('bot', getHcuAssistantAnswer(question)), 350);
-        }
-
-        function sendHcuAssistant() {
-            const input = document.getElementById('hcu-assistant-input');
-            if (!input) return;
-            const question = input.value.trim();
-            if (!question) return;
-            input.value = '';
-            askHcuAssistant(question);
-        }
-
         function logout() {
             if (synth.speaking) {
                 synth.cancel();
@@ -4006,6 +3989,135 @@
             showSection('hero-view', true);
             showToast('Anda telah keluar dari sistem.', 'info');
         }
+
+
+        /* =========================================================
+           ASISTEN HCU - PERTANYAAN TETAP + DATA PASIEN DATABASE
+           Data pasien hanya dibaca dari activePatient yang sudah
+           diverifikasi melalui proses login. Tidak ada pencarian
+           pasien publik dari chatbot.
+           ========================================================= */
+        let hcuAssistantStarted = false;
+
+        function openHcuAssistant() {
+            const backdrop = document.getElementById('hcu-assistant-backdrop');
+            if (!backdrop) return;
+            backdrop.classList.add('active');
+            if (!hcuAssistantStarted) {
+                addHcuAssistantMessage('bot', 'Halo 👋 Saya Asisten HCU Melati. Saya dapat membantu informasi sistem. Untuk pertanyaan tentang kondisi atau riwayat pasien, saya hanya menggunakan data pasien yang sudah terverifikasi melalui login.');
+                hcuAssistantStarted = true;
+            }
+            setTimeout(() => document.getElementById('hcu-assistant-input')?.focus(), 100);
+        }
+
+        function closeHcuAssistant() {
+            document.getElementById('hcu-assistant-backdrop')?.classList.remove('active');
+        }
+
+        function addHcuAssistantMessage(sender, text) {
+            const box = document.getElementById('hcu-assistant-messages');
+            if (!box) return;
+            const el = document.createElement('div');
+            el.className = 'hcu-assistant-msg ' + sender;
+            el.textContent = text;
+            box.appendChild(el);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function askHcuAssistant(question) {
+            openHcuAssistant();
+            setTimeout(() => {
+                addHcuAssistantMessage('user', question);
+                const answer = getHcuAssistantAnswer(question);
+                setTimeout(() => addHcuAssistantMessage('bot', answer), 250);
+            }, 120);
+        }
+
+        function sendHcuAssistant() {
+            const input = document.getElementById('hcu-assistant-input');
+            if (!input) return;
+            const question = input.value.trim();
+            if (!question) return;
+            openHcuAssistant();
+            addHcuAssistantMessage('user', question);
+            input.value = '';
+            const answer = getHcuAssistantAnswer(question);
+            setTimeout(() => addHcuAssistantMessage('bot', answer), 250);
+        }
+
+        function getHcuAssistantAnswer(question) {
+            const q = cleanString(question);
+            const wantsCondition = /kondisi|keadaan|tanda vital|terkini|sekarang|saat ini|terbaru|spo2|saturasi|tekanan darah|nadi|napas|suhu|gcs/.test(q);
+            const wantsHistory = /riwayat|histori|perkembangan|catatan|rekam|sebelumnya/.test(q);
+
+            /* Pertanyaan tentang pasien wajib memakai activePatient.
+               activePatient hanya terisi setelah login terverifikasi. */
+            if (wantsCondition || wantsHistory) {
+                if (!activePatient) {
+                    return 'Untuk menjaga kerahasiaan data pasien, saya tidak dapat menampilkan kondisi atau riwayat pasien dari halaman awal. Silakan pilih “Masuk ke Sistem” dan login sebagai keluarga pasien terlebih dahulu. Setelah identitas terverifikasi, data yang ditampilkan akan mengikuti database pasien.';
+                }
+
+                const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
+
+                if (wantsHistory) {
+                    if (!logs.length) {
+                        return 'Pasien ' + activePatient.nama + ' (No. RM ' + activePatient.rm + ') belum memiliki catatan perkembangan pada database.';
+                    }
+                    const history = logs.slice(0, 5).map((log, i) => {
+                        return (i + 1) + '. ' + (log.datetime || '-') + ' — Shift ' + (log.shift || '-') + '\n' +
+                            '   TD ' + (log.td || '-') + ' | Nadi ' + (log.nadi || '-') + ' | RR ' + (log.rr || '-') + ' | SpO₂ ' + (log.spo2 || '-') + ' | Suhu ' + (log.suhu || '-') + ' | GCS ' + (log.gcs || '-') + '\n' +
+                            '   Catatan: ' + (log.catatan || '-');
+                    }).join('\n\n');
+                    return 'Riwayat terbaru pasien ' + activePatient.nama + ' (No. RM ' + activePatient.rm + '):\n\n' + history;
+                }
+
+                const latest = logs[0];
+                if (!latest) {
+                    return 'Pasien ' + activePatient.nama + ' (No. RM ' + activePatient.rm + ') belum memiliki data tanda vital pada database.';
+                }
+                return 'Data kondisi terbaru pasien ' + activePatient.nama + ' (No. RM ' + activePatient.rm + '):\n' +
+                    '• Waktu: ' + (latest.datetime || '-') + '\n' +
+                    '• Shift: ' + (latest.shift || '-') + '\n' +
+                    '• Tekanan darah: ' + (latest.td || '-') + '\n' +
+                    '• Nadi: ' + (latest.nadi || '-') + ' kali/menit\n' +
+                    '• RR: ' + (latest.rr || '-') + ' kali/menit\n' +
+                    '• SpO₂: ' + (latest.spo2 || '-') + '%\n' +
+                    '• Suhu: ' + (latest.suhu || '-') + ' °C\n' +
+                    '• Oksigen: ' + (latest.o2device || '-') + '\n' +
+                    '• GCS: ' + (latest.gcs || '-') + '\n' +
+                    '• Catatan: ' + (latest.catatan || '-');
+            }
+
+            if (/apa itu hcu|tentang hcu|hcu melati/.test(q)) {
+                return 'HCU (High Care Unit) adalah unit perawatan untuk pasien yang membutuhkan pemantauan lebih intensif dibanding ruang rawat biasa. HCU Melati Smart Care Connect membantu keluarga dan petugas mengakses informasi sesuai hak akses.';
+            }
+            if (/cara menggunakan|gunakan sistem|cara login|login/.test(q)) {
+                return 'Pilih “Masuk ke Sistem”, kemudian pilih Keluarga Pasien atau Petugas HCU. Keluarga pasien melakukan verifikasi menggunakan Nama dan No. RM yang sesuai dengan database.';
+            }
+            if (/kontak|hubungi|informasi/.test(q)) {
+                return 'Untuk informasi dan kontak HCU Melati, silakan buka menu “Kontak & Informasi” pada bagian atas halaman.';
+            }
+            return 'Saya dapat membantu tentang HCU Melati, cara menggunakan sistem, kondisi pasien terbaru, dan riwayat perkembangan pasien. Untuk data pasien, silakan login terlebih dahulu agar informasi mengikuti database pasien yang terverifikasi.';
+        }
+
     </script>
+
+
+    <!-- POPUP ASISTEN HCU - hanya dipanggil dari dashboard awal -->
+    <div class="hcu-assistant-backdrop" id="hcu-assistant-backdrop" onclick="if(event.target===this) closeHcuAssistant()">
+        <div class="hcu-assistant-window" role="dialog" aria-modal="true" aria-label="Asisten HCU Melati">
+            <div class="hcu-assistant-window-head">
+                <i class="fa-solid fa-robot"></i>
+                <strong>Asisten HCU Melati</strong>
+                <button class="hcu-assistant-close" type="button" onclick="closeHcuAssistant()" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="hcu-assistant-messages" id="hcu-assistant-messages"></div>
+            <div class="hcu-assistant-input">
+                <input id="hcu-assistant-input" type="text" placeholder="Tulis pertanyaan..." autocomplete="off" onkeydown="if(event.key==='Enter') sendHcuAssistant()">
+                <button type="button" onclick="sendHcuAssistant()" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
