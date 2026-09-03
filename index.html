@@ -3694,24 +3694,54 @@
             const chatList = databaseChats[activePatient.rm] || [];
             if (chatList.length === 0 && unifiedAssistantMessages.length === 0) {
                 container.innerHTML = `<div style="text-align:center;color:var(--gray-text);padding:1.5rem 1rem;">Belum ada pesan. Pilih <b>Kondisi</b>, <b>Riwayat</b>, atau kirim pesan ke petugas.</div>`;
+                return;
             }
 
-            chatList.forEach(c => {
-                const isMe = c.sender === 'patient';
-                const sender = isMe ? 'Anda' : 'Perawat HCU';
-                const extra = c.time ? ` • ${escapeHcuHtml(c.time)}` : '';
-                const text = escapeHcuHtml(c.text);
-                container.innerHTML += `<div class="chat-message ${isMe ? 'sent' : 'received'}">${text}<span class="meta">${sender}${extra}</span></div>`;
+            /*
+             * Gabungkan pesan Petugas/Pasien + Asisten lalu urutkan berdasarkan
+             * waktu dibuat. Dengan cara ini pesan baru dari keluarga/perawat
+             * selalu muncul PALING BAWAH, termasuk setelah balasan chatbot.
+             * Pesan lama yang belum memiliki createdAt diberi urutan berdasarkan
+             * posisi array agar tetap kompatibel dengan data sebelumnya.
+             */
+            const timeline = [];
+            chatList.forEach((c, index) => {
+                timeline.push({
+                    type: 'chat',
+                    data: c,
+                    order: Number.isFinite(Number(c.createdAt)) ? Number(c.createdAt) : index
+                });
             });
 
-            unifiedAssistantMessages.forEach(m => {
-                container.innerHTML += `<div class="unified-assistant-message"><div class="unified-assistant-label"><i class="fa-solid fa-robot"></i> Asisten HCU Melati</div>${m.html}</div>`;
+            unifiedAssistantMessages.forEach((m, index) => {
+                timeline.push({
+                    type: 'assistant',
+                    data: m,
+                    order: Number.isFinite(Number(m.createdAt)) ? Number(m.createdAt) : (chatList.length + index)
+                });
             });
+
+            timeline.sort((a, b) => a.order - b.order);
+
+            timeline.forEach(item => {
+                if (item.type === 'chat') {
+                    const c = item.data;
+                    const isMe = c.sender === 'patient';
+                    const sender = isMe ? 'Anda' : 'Perawat HCU';
+                    const extra = c.time ? ` • ${escapeHcuHtml(c.time)}` : '';
+                    const text = escapeHcuHtml(c.text);
+                    container.innerHTML += `<div class="chat-message ${isMe ? 'sent' : 'received'}">${text}<span class="meta">${sender}${extra}</span></div>`;
+                } else {
+                    const m = item.data;
+                    container.innerHTML += `<div class="unified-assistant-message"><div class="unified-assistant-label"><i class="fa-solid fa-robot"></i> Asisten HCU Melati</div>${m.html}</div>`;
+                }
+            });
+
             container.scrollTop = container.scrollHeight;
         }
 
         function addUnifiedAssistantMessage(html) {
-            unifiedAssistantMessages.push({ html });
+            unifiedAssistantMessages.push({ html, createdAt: Date.now() });
             renderPatientChats();
         }
 
@@ -3743,7 +3773,8 @@
             databaseChats[activePatient.rm].push({
                 sender: 'patient',
                 text: text,
-                time: timeStr
+                time: timeStr,
+                createdAt: Date.now()
             });
 
             saveDatabaseToStorage();
@@ -3829,7 +3860,7 @@
 
             databasePasien.push(newPatient);
             databaseChats[newRm] = [
-                { sender: "nurse", text: `Selamat datang di HCU Melati Smart Connect. Akun keluarga untuk pasien ${newName} (DPJP: ${newDokter}) telah aktif.`, time: timeStr }
+                { sender: "nurse", text: `Selamat datang di HCU Melati Smart Connect. Akun keluarga untuk pasien ${newName} (DPJP: ${newDokter}) telah aktif.`, time: timeStr, createdAt: Date.now() }
             ];
 
             saveDatabaseToStorage();
@@ -3970,7 +4001,8 @@
             databaseChats[p.rm].push({
                 sender: 'nurse',
                 text: text,
-                time: timeStr
+                time: timeStr,
+                createdAt: Date.now()
             });
 
             saveDatabaseToStorage();
