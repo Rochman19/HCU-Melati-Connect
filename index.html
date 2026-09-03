@@ -157,6 +157,32 @@
         .logo-subtitle { font-size: 0.8rem; color: var(--gray-text); font-weight: 500; }
         .header-actions { display: flex; gap: 10px; align-items: center; }
 
+        /* MENU MOBILE */
+        .mobile-menu-toggle {
+            display: none;
+            border: 1.5px solid var(--primary);
+            background: var(--card-bg);
+            color: var(--primary);
+            border-radius: 12px;
+            min-height: 44px;
+            padding: 0.65rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mobile-menu-toggle.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .mobile-menu-panel {
+            display: none;
+        }
+
         .btn-theme-toggle {
             background: var(--card-bg);
             color: var(--primary);
@@ -1234,31 +1260,71 @@
             }
 
             .header-actions {
+                display: none !important;
+            }
+
+            .mobile-menu-toggle {
+                display: inline-flex;
                 width: 100%;
+            }
+
+            .mobile-menu-panel {
+                display: none;
+                width: 100%;
+                padding: 8px;
+                background: var(--card-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 16px;
+                box-shadow: 0 10px 28px rgba(0,0,0,0.10);
+                animation: mobileMenuIn 0.2s ease-out;
+            }
+
+            .mobile-menu-panel.active {
                 display: grid;
-                grid-template-columns: 1fr;
-                gap: 0.6rem;
-                flex-wrap: nowrap;
+                gap: 7px;
             }
 
-            .header-actions button {
+            .mobile-menu-item {
                 width: 100%;
-                min-width: 0;
-                min-height: 44px;
-                padding: 0.65rem 0.6rem !important;
-                font-size: 0.78rem !important;
-                line-height: 1.2;
-                justify-content: center;
-                white-space: normal;
+                min-height: 46px;
+                padding: 10px 13px;
+                border: 1px solid var(--border-color);
+                border-radius: 11px;
+                background: var(--bg-color);
+                color: var(--dark-text);
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 10px;
+                font-size: 0.82rem;
+                font-weight: 600;
+                cursor: pointer;
+                text-align: left;
             }
 
-            .header-actions .btn-primary {
-                grid-column: auto;
+            .mobile-menu-item i {
+                width: 22px;
+                text-align: center;
+                color: var(--primary);
             }
 
-            .header-actions .btn-theme-toggle,
-            .header-actions .btn-nav-outline {
-                border-radius: 12px;
+            .mobile-menu-item:active {
+                transform: scale(0.98);
+            }
+
+            .mobile-menu-item.mobile-contact {
+                background: linear-gradient(135deg, var(--primary), var(--secondary));
+                color: #fff;
+                border-color: transparent;
+            }
+
+            .mobile-menu-item.mobile-contact i {
+                color: #fff;
+            }
+
+            @keyframes mobileMenuIn {
+                from { opacity: 0; transform: translateY(-5px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
             main {
@@ -1743,26 +1809,9 @@
                 justify-content: center;
             }
 
-            .header-actions {
-                width: 100%;
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: stretch !important;
-                gap: 0.6rem !important;
-            }
-
-            .header-actions > button {
-                width: 100% !important;
-                min-width: 0 !important;
-                max-width: none !important;
-                min-height: 46px;
-                margin: 0 !important;
-                justify-content: center;
-            }
-
-            .header-actions .btn-primary {
-                grid-column: auto !important;
-            }
+            .header-actions { display: none !important; }
+            .mobile-menu-toggle { display: inline-flex; }
+            .mobile-menu-panel.active { display: grid; }
         }
 
         /* Smartphone kecil: 360px ke bawah */
@@ -1810,23 +1859,6 @@
         }
 
     </style>
-
-    <!-- Supabase: database online untuk sinkronisasi lintas perangkat -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // =========================================================
-        // KONFIGURASI SUPABASE
-        // Ganti dua nilai di bawah setelah membuat project Supabase.
-        // Gunakan Publishable key / anon key, JANGAN service_role/secret key.
-        // =========================================================
-        const SUPABASE_URL = 'https://vmdfdslklwxmotvmditp.supabase.co';
-        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_QcjwxKLMV6idSBh-hI5aBw_DZq1zfGv';
-        let supabaseClient = null;
-        if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('PASTE_') && !SUPABASE_PUBLISHABLE_KEY.includes('PASTE_')) {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-        }
-    </script>
-
 </head>
 <body data-theme="light">
 
@@ -1842,8 +1874,11 @@
                 <span class="logo-subtitle"><span class="live-dot"></span> RSUD Bangil Pasuruan</span>
             </div>
         </div>
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-expanded="false">
+            <i class="fa-solid fa-bars"></i> <span>Menu</span>
+        </button>
         <div class="header-actions">
-            <button class="btn-theme-toggle" onclick="cycleTheme()" title="Ganti Tema Tampilan">
+            <button class="btn-theme-toggle" onclick="cycleTheme(); closeMobileMenu();" title="Ganti Tema Tampilan">
                 <i id="theme-icon" class="fa-solid fa-lightbulb" style="color: #f59e0b;"></i> 
                 <span id="theme-label">Terang</span>
             </button>
@@ -1851,8 +1886,24 @@
             <button class="btn-nav-outline" onclick="showSection('guide-view')">
                 <i class="fa-solid fa-book-open"></i> Petunjuk Penggunaan
             </button>
-            <button class="btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.85rem;" onclick="showSection('contact-view')">
+            <button class="btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.85rem;" onclick="showSection('contact-view'); closeMobileMenu();">
                 <i class="fa-solid fa-headset"></i> Kontak & Informasi
+            </button>
+        </div>
+
+        <!-- Pilihan menu khusus smartphone -->
+        <div class="mobile-menu-panel" id="mobile-menu-panel">
+            <button class="mobile-menu-item" onclick="cycleTheme(); closeMobileMenu();">
+                <i id="mobile-theme-icon" class="fa-solid fa-lightbulb"></i>
+                <span id="mobile-theme-label">Terang</span>
+            </button>
+            <button class="mobile-menu-item" onclick="showSection('guide-view'); closeMobileMenu();">
+                <i class="fa-solid fa-book-open"></i>
+                <span>Petunjuk Penggunaan</span>
+            </button>
+            <button class="mobile-menu-item mobile-contact" onclick="showSection('contact-view'); closeMobileMenu();">
+                <i class="fa-solid fa-headset"></i>
+                <span>Kontak & Informasi</span>
             </button>
         </div>
     </header>
@@ -2596,6 +2647,29 @@
             }
         }
 
+        function toggleMobileMenu() {
+            const panel = document.getElementById('mobile-menu-panel');
+            const toggle = document.getElementById('mobile-menu-toggle');
+            if (!panel || !toggle) return;
+
+            const isOpen = panel.classList.toggle('active');
+            toggle.classList.toggle('active', isOpen);
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            toggle.innerHTML = isOpen
+                ? '<i class="fa-solid fa-xmark"></i> <span>Tutup</span>'
+                : '<i class="fa-solid fa-bars"></i> <span>Menu</span>';
+        }
+
+        function closeMobileMenu() {
+            const panel = document.getElementById('mobile-menu-panel');
+            const toggle = document.getElementById('mobile-menu-toggle');
+            if (!panel || !toggle) return;
+            panel.classList.remove('active');
+            toggle.classList.remove('active');
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.innerHTML = '<i class="fa-solid fa-bars"></i> <span>Menu</span>';
+        }
+
         function cycleTheme() {
             let nextIndex = (currentThemeIndex + 1) % themes.length;
             applyTheme(nextIndex);
@@ -2753,12 +2827,9 @@
             const savedTheme = localStorage.getItem('hcu_theme') || 'light';
             const foundIdx = themes.findIndex(t => t.id === savedTheme);
             applyTheme(foundIdx !== -1 ? foundIdx : 0);
-
-            // Ambil data bersama dari server saat halaman dibuka.
-            loadDatabaseFromServer();
         });
 
-        // DATABASE DEFAULT / CACHE
+        // DATABASE DUMMY
         const defaultPatients = [
             {
                 nama: "Siti Aminah",
@@ -2803,26 +2874,9 @@
             ]
         };
 
-        // DATA LOKAL HANYA SEBAGAI CACHE. DATA UTAMA DISINKRONKAN KE SUPABASE.
-        function readLocalJSON(key, fallback) {
-            try {
-                const raw = localStorage.getItem(key);
-                return raw ? JSON.parse(raw) : fallback;
-            } catch (err) {
-                console.warn('Cache lokal rusak:', key, err);
-                return fallback;
-            }
-        }
-
-        let databasePasien = readLocalJSON('hcu_patients', defaultPatients);
-        let databaseChats = readLocalJSON('hcu_chats', defaultChats);
-        let databaseHistory = readLocalJSON('hcu_history', []);
-        let serverDataLoaded = false;
-        let syncTimer = null;
-        let syncInProgress = false;
-        let realtimeChannel = null;
-        let realtimePollTimer = null;
-        let realtimeStarted = false;
+        let databasePasien = JSON.parse(localStorage.getItem('hcu_patients')) || defaultPatients;
+        let databaseChats = JSON.parse(localStorage.getItem('hcu_chats')) || defaultChats;
+        let databaseHistory = JSON.parse(localStorage.getItem('hcu_history')) || [];
 
         let activePatient = null;
         let currentSelectedPatientIndex = null;
@@ -3106,199 +3160,10 @@
             if (timeInput) timeInput.value = `${hours}:${minutes}`;
         }
 
-        // =========================================================
-        // PENYIMPANAN DATA: CACHE LOKAL + SUPABASE (CROSS-DEVICE)
-        // =========================================================
-        let pendingSync = false;
-
-        function cacheDatabaseLocally() {
+        function saveDatabaseToStorage() {
             localStorage.setItem('hcu_patients', JSON.stringify(databasePasien));
             localStorage.setItem('hcu_chats', JSON.stringify(databaseChats));
             localStorage.setItem('hcu_history', JSON.stringify(databaseHistory));
-        }
-
-        function saveDatabaseToStorage() {
-            // Cache lokal hanya sebagai cadangan/offline. Database utama adalah Supabase.
-            cacheDatabaseLocally();
-            pendingSync = true;
-            clearTimeout(syncTimer);
-            syncTimer = setTimeout(() => { syncDatabaseToServer(); }, 300);
-        }
-
-        async function syncDatabaseToServer() {
-            if (!supabaseClient) {
-                console.warn('Supabase belum dikonfigurasi. Data masih tersimpan di perangkat ini saja.');
-                return false;
-            }
-            if (syncInProgress) {
-                clearTimeout(syncTimer);
-                syncTimer = setTimeout(() => syncDatabaseToServer(), 500);
-                return false;
-            }
-
-            syncInProgress = true;
-            try {
-                const payload = {
-                    id: 1,
-                    patients: databasePasien,
-                    chats: databaseChats,
-                    history: databaseHistory,
-                    updated_at: new Date().toISOString()
-                };
-
-                const { error } = await supabaseClient
-                    .from('hcu_state')
-                    .upsert(payload, { onConflict: 'id' });
-
-                if (error) throw error;
-                pendingSync = false;
-                serverDataLoaded = true;
-                return true;
-            } catch (error) {
-                console.error('Sinkronisasi Supabase gagal:', error);
-                showToast('Data lokal tersimpan, tetapi belum tersinkron ke server.', 'danger');
-                return false;
-            } finally {
-                syncInProgress = false;
-            }
-        }
-
-        // =========================================================
-        // REALTIME CHAT / DATA SYNC
-        // Supabase Realtime akan mengirim perubahan dari perangkat lain
-        // tanpa perlu refresh atau logout. Polling 5 detik menjadi fallback
-        // apabila Realtime belum aktif di project Supabase.
-        // =========================================================
-        function applyServerState(data) {
-            if (!data) return;
-
-            databasePasien = Array.isArray(data.patients) ? data.patients : [];
-            databaseChats = data.chats && typeof data.chats === 'object' ? data.chats : {};
-            databaseHistory = Array.isArray(data.history) ? data.history : [];
-            cacheDatabaseLocally();
-            serverDataLoaded = true;
-
-            // Pertahankan pasien yang sedang dibuka dengan versi terbaru.
-            if (activePatient && activePatient.rm) {
-                const rm = cleanString(activePatient.rm);
-                const latest = databasePasien.find(p => cleanString(p.rm) === rm);
-                const history = databaseHistory.find(p => cleanString(p.rm) === rm);
-                if (latest || history) {
-                    activePatient = latest || history;
-                }
-            }
-
-            // Update tampilan chat jika modal/chat sedang terbuka.
-            const patientChatModal = document.getElementById('patient-chat-review-modal');
-            if (activePatient && patientChatModal && patientChatModal.classList.contains('active')) {
-                renderPatientChats();
-            }
-
-            const nurseChatModal = document.getElementById('nurse-chat-modal');
-            if (nurseChatModal && nurseChatModal.classList.contains('active') && currentSelectedPatientIndex !== null) {
-                const p = databasePasien[currentSelectedPatientIndex];
-                if (p) renderNurseChats(p.rm);
-            }
-
-            if (document.getElementById('nurse-patient-table-body')) {
-                renderNursePatientTable();
-            }
-
-            // Perbarui dashboard pasien/TTV jika sedang dibuka.
-            if (activePatient && document.getElementById('dashboard-patient-view')?.classList.contains('active')) {
-                renderPatientDashboard();
-            }
-        }
-
-        async function refreshRealtimeState() {
-            if (!supabaseClient) return;
-            try {
-                const { data, error } = await supabaseClient
-                    .from('hcu_state')
-                    .select('id, patients, chats, history, updated_at')
-                    .eq('id', 1)
-                    .maybeSingle();
-                if (error) throw error;
-                if (data) applyServerState(data);
-            } catch (error) {
-                console.warn('Refresh sinkronisasi realtime gagal:', error);
-            }
-        }
-
-        function startRealtimeSync() {
-            if (!supabaseClient || realtimeStarted) return;
-            realtimeStarted = true;
-
-            realtimeChannel = supabaseClient
-                .channel('hcu-state-realtime')
-                .on('postgres_changes',
-                    { event: '*', schema: 'public', table: 'hcu_state', filter: 'id=eq.1' },
-                    (payload) => {
-                        if (payload.eventType === 'DELETE') return;
-                        if (payload.new) {
-                            applyServerState(payload.new);
-                        }
-                    }
-                )
-                .subscribe((status) => {
-                    console.log('Supabase Realtime:', status);
-                    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-                        // Fallback polling tetap berjalan agar chat tidak perlu refresh.
-                        refreshRealtimeState();
-                    }
-                });
-
-            // Fallback: cek perubahan server berkala. Jika Realtime aktif,
-            // query ini tetap ringan dan memastikan browser tidak tertinggal.
-            clearInterval(realtimePollTimer);
-            realtimePollTimer = setInterval(refreshRealtimeState, 5000);
-        }
-
-        async function loadDatabaseFromServer() {
-            if (!supabaseClient) {
-                console.warn('Supabase belum dikonfigurasi. Menggunakan cache lokal.');
-                renderNursePatientTable();
-                return;
-            }
-
-            try {
-                const { data, error } = await supabaseClient
-                    .from('hcu_state')
-                    .select('id, patients, chats, history, updated_at')
-                    .eq('id', 1)
-                    .maybeSingle();
-
-                if (error) throw error;
-
-                if (data) {
-                    databasePasien = Array.isArray(data.patients) ? data.patients : [];
-                    databaseChats = data.chats && typeof data.chats === 'object' ? data.chats : {};
-                    databaseHistory = Array.isArray(data.history) ? data.history : [];
-                    cacheDatabaseLocally();
-                    serverDataLoaded = true;
-                    console.log('Data HCU berhasil dimuat dari Supabase:', data.updated_at || '-');
-                } else {
-                    // Database online masih kosong: jadikan data perangkat pertama sebagai data awal bersama.
-                    cacheDatabaseLocally();
-                    await syncDatabaseToServer();
-                }
-
-                if (document.getElementById('nurse-patient-table-body')) renderNursePatientTable();
-                if (activePatient) {
-                    const latest = databasePasien.find(p => cleanString(p.rm) === cleanString(activePatient.rm));
-                    const history = databaseHistory.find(p => cleanString(p.rm) === cleanString(activePatient.rm));
-                    if (latest || history) {
-                        activePatient = latest || history;
-                        renderPatientDashboard();
-                    }
-                }
-            } catch (error) {
-                console.warn('Supabase belum dapat diakses. Menggunakan cache lokal:', error);
-                renderNursePatientTable();
-            }
-
-            // Mulai listener setelah koneksi database tersedia.
-            startRealtimeSync();
         }
 
         function cleanString(str) {
