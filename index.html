@@ -2413,7 +2413,7 @@
                             <i class="fa-solid fa-print"></i> Cetak Laporan
                         </button>
                         <button id="main-voice-btn" class="btn-nav-outline" style="font-size: 0.82rem; padding: 0.4rem 0.9rem; border-color: var(--purple); color: var(--purple);" onclick="speakPatientStatus()">
-                            <i id="voice-btn-icon" class="fa-solid fa-volume-high"></i> <span id="voice-btn-label">Bacakan Laporan</span>
+                            <i id="voice-btn-icon" class="fa-solid fa-volume-high"></i> <span id="voice-btn-label">Bacakan Laporan &amp; Analisis TTV</span>
                         </button>
                         <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
                     </div>
@@ -2449,6 +2449,19 @@
                         <span>GCS</span>
                         <h4 id="v-gcs">-</h4>
                     </div>
+                </div>
+
+                <!-- ANALISIS OTOMATIS TTV -->
+                <div id="ai-chatbot-analysis-box" style="border-left:5px solid var(--purple); background:rgba(139,92,246,.05); padding:15px; border-radius:14px; margin-bottom:20px; box-shadow:0 6px 18px rgba(15,23,42,.05);">
+                    <h3 style="font-size:1rem; color:var(--purple); margin-bottom:7px; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-robot"></i> Analisis Otomatis TTV (Rule-Based)
+                    </h3>
+                    <p id="ai-analysis-text" style="font-size:.92rem; line-height:1.55; color:var(--dark-text); margin:0;">
+                        Memuat status vital pasien...
+                    </p>
+                    <small style="display:block; margin-top:8px; color:var(--gray-text); font-size:.72rem;">
+                        Analisis ini merupakan indikator berbasis aturan dari data TTV terbaru dan bukan diagnosis medis.
+                    </small>
                 </div>
 
                 <!-- GRAFIK TREN TTV -->
@@ -3172,13 +3185,75 @@
             } else {
                 if (mainVoiceBtn) mainVoiceBtn.classList.remove('btn-voice-active');
                 if (voiceIcon) voiceIcon.className = 'fa-solid fa-volume-high';
-                if (voiceLabel) voiceLabel.innerText = 'Bacakan Laporan';
+                if (voiceLabel) voiceLabel.innerText = 'Bacakan Laporan & Analisis TTV';
 
                 if (fabSubBtn) fabSubBtn.style.background = 'var(--card-bg)';
                 if (fabSubBtn) fabSubBtn.style.color = 'var(--purple)';
                 if (fabSubIcon) fabSubIcon.className = 'fa-solid fa-volume-high';
                 if (fabSubLabel) fabSubLabel.innerText = 'Asisten Suara (Baca TTV)';
             }
+        }
+
+        /* =========================================================
+           ANALISIS OTOMATIS TTV - RULE BASED
+           Menilai parameter TTV terbaru berdasarkan aturan pada fitur tambahan.
+           Ini adalah indikator informasi, bukan diagnosis medis.
+           ========================================================= */
+        function analyzePatientVitals(latestLog) {
+            if (!latestLog) {
+                return {
+                    statusText: "Belum ada data Tanda Vital yang dapat dianalisis.",
+                    voiceText: "Belum ada data Tanda Vital yang dicatat oleh perawat.",
+                    isNormal: true
+                };
+            }
+
+            const abnormalNotes = [];
+
+            // Cek Tensi (sistolik) sesuai aturan fitur tambahan: 90-140
+            const tdParts = String(latestLog.td || '').split('/');
+            const sys = parseInt(tdParts[0], 10);
+            if (!isNaN(sys) && (sys > 140 || sys < 90)) {
+                abnormalNotes.push(`Tekanan darah ${latestLog.td} di luar batas normal (ideal 90-140)`);
+            }
+
+            // Cek Nadi / HR: 60-100 kali/menit
+            const hr = parseInt(latestLog.nadi, 10);
+            if (!isNaN(hr) && (hr < 60 || hr > 100)) {
+                abnormalNotes.push(`Denyut nadi ${latestLog.nadi} kali per menit di luar rentang normal 60 sampai 100`);
+            }
+
+            // Cek RR: 12-24 kali/menit sesuai fitur tambahan
+            const rr = parseInt(latestLog.rr, 10);
+            if (!isNaN(rr) && (rr < 12 || rr > 24)) {
+                abnormalNotes.push(`Frekuensi napas ${latestLog.rr} kali per menit perlu perhatian`);
+            }
+
+            // Cek SpO2: >=95%
+            const spo2 = parseInt(latestLog.spo2, 10);
+            if (!isNaN(spo2) && spo2 < 95) {
+                abnormalNotes.push(`Saturasi oksigen SpO2 ${latestLog.spo2}% berada di bawah batas normal 95 persen`);
+            }
+
+            // Cek suhu: 36.0-38.0 °C
+            const temp = parseFloat(latestLog.suhu);
+            if (!isNaN(temp) && (temp < 36.0 || temp > 38.0)) {
+                abnormalNotes.push(`Suhu tubuh ${latestLog.suhu} derajat celsius menunjukkan adanya deviasi`);
+            }
+
+            if (abnormalNotes.length === 0) {
+                return {
+                    statusText: "Status Normal dan Stabil: Seluruh parameter tanda vital terpantau berada dalam rentang aman.",
+                    voiceText: "Berdasarkan parameter di atas, kondisi tanda vital pasien saat ini dinilai Normal dan Stabil.",
+                    isNormal: true
+                };
+            }
+
+            return {
+                statusText: `Perhatian Khusus / Abnormal: Terindikasi ${abnormalNotes.join('. ')}.`,
+                voiceText: `Perhatian. Berdasarkan parameter di atas, terdapat indikator yang memerlukan perhatian khusus, yaitu: ${abnormalNotes.join('. ')}.`,
+                isNormal: false
+            };
         }
 
         function speakPatientStatus() {
@@ -3215,7 +3290,10 @@
                 textToRead += `Suhu tubuh: ${latest.suhu || 'tidak ada data'} derajat celsius. `;
                 textToRead += `Alat oksigen: ${latest.o2device || 'tanpa alat'}. `;
                 textToRead += `Tingkat kesadaran GCS: ${latest.gcs || 'tidak ada data'}. `;
-                textToRead += `Catatan perawat: ${latest.catatan}.`;
+                textToRead += `Catatan perawat: ${latest.catatan || 'tidak ada catatan'}. `;
+                // Setelah rincian TTV, bacakan juga kesimpulan analisis otomatis.
+                const analysis = analyzePatientVitals(latest);
+                textToRead += analysis.voiceText;
             } else {
                 textToRead += `Belum ada catatan perkembangan Tanda Vital yang diinput oleh perawat jaga HCU.`;
             }
@@ -3715,6 +3793,17 @@
                 document.getElementById('v-suhu').innerText = "-";
                 document.getElementById('v-o2device').innerText = "-";
                 document.getElementById('v-gcs').innerText = "-";
+            }
+
+            // Perbarui kesimpulan analisis otomatis setiap dashboard dirender.
+            const analysisBox = document.getElementById('ai-chatbot-analysis-box');
+            const analysisText = document.getElementById('ai-analysis-text');
+            if (analysisBox && analysisText) {
+                const analysis = analyzePatientVitals(logs[0]);
+                analysisText.textContent = analysis.statusText;
+                analysisText.style.color = analysis.isNormal ? 'var(--success)' : 'var(--danger)';
+                analysisBox.style.borderLeftColor = analysis.isNormal ? 'var(--success)' : 'var(--danger)';
+                analysisBox.style.background = analysis.isNormal ? 'rgba(16,185,129,.06)' : 'rgba(239,68,68,.06)';
             }
 
             renderVitalsChart(logs);
