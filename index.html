@@ -2086,6 +2086,15 @@
         .unified-chat-head strong { display:block; font-size:.82rem; color:var(--dark-text); }
         .unified-chat-head span { display:block; margin-top:2px; font-size:.65rem; color:var(--success); }
         .unified-chat-head span i { font-size:.5rem; }
+        .hcu-condition-guide{padding-bottom:1rem}
+        .condition-guide-item{background:rgba(255,255,255,.72);border:1px solid rgba(16,185,129,.20);border-radius:14px;padding:.72rem .8rem;margin:.48rem 0;line-height:1.45;color:var(--dark-text)}
+        .condition-guide-item .condition-guide-title{font-size:.96rem;color:var(--primary-dark);margin-bottom:.12rem}
+        .condition-guide-item small{display:block;margin-top:.18rem;font-weight:700;color:var(--secondary)}
+        .condition-guide-subtitle{font-weight:800;font-size:1rem;color:var(--primary-dark);margin:1rem 0 .3rem}
+        .condition-guide-desc{font-size:.88rem;color:var(--gray-text);margin-bottom:.45rem}
+        .condition-guide-scale{display:flex;flex-direction:column;gap:.42rem;background:rgba(248,250,252,.85);border-radius:12px;padding:.7rem .75rem;font-size:.84rem;line-height:1.45}
+        .condition-guide-prompt{margin:1rem 0 .55rem;padding:.7rem .8rem;border-radius:12px;background:rgba(2,132,199,.06);border:1px solid rgba(2,132,199,.14);font-size:.86rem;color:var(--dark-text)}
+
         .unified-chat-quick { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:9px; }
         .unified-chat-quick button { border:1px solid rgba(16,185,129,.22); background:linear-gradient(145deg,#ffffff,#f0fdf8); color:#075e54; border-radius:14px; padding:7px 11px; font:inherit; font-size:.68rem; font-weight:700; cursor:pointer; box-shadow:0 3px 10px rgba(15,118,110,.08); transition:all .2s ease; display:inline-flex; align-items:center; gap:6px; }
         .unified-chat-quick button i { font-size:.8rem; }
@@ -4519,30 +4528,93 @@
             const typing = showUnifiedTyping();
             setTimeout(() => {
                 if (typing) typing.remove();
+
                 const logs = Array.isArray(activePatient.logs) ? activePatient.logs : [];
                 const latest = logs[0];
-                if (!latest) {
-                    addUnifiedAssistantMessage(`📋 <strong>${escapeHcuHtml(activePatient.nama)}</strong> (No. RM ${escapeHcuHtml(activePatient.rm)})<br>Belum ada data tanda vital/perkembangan di database.`);
-                    addUnifiedBackToPetugasButton();
-                    return;
-                }
+                const latestMeta = latest
+                    ? `<div class="hcu-result-meta">Data terakhir: ${escapeHcuHtml(latest.datetime || '-')} · Shift ${escapeHcuHtml(latest.shift || '-')}</div>`
+                    : '';
 
-                // TTV ditampilkan satu per satu melalui pilihan chat agar keluarga
-                // dapat menanyakan TD, HR/Nadi, RR, Suhu, SpO₂, Alat O2, dan GCS secara terpisah.
+                // Penjelasan kondisi pasien dibuat sebagai panduan yang mudah dipahami
+                // keluarga pasien sebelum memilih TTV yang ingin dilihat satu per satu.
                 addUnifiedAssistantMessage(`
-                    <div class="hcu-patient-result">
-                        <div class="hcu-result-title"><i class="fa-solid fa-heart-pulse"></i> TTV Pasien</div>
-                        <div class="hcu-patient-identity"><strong>${escapeHcuHtml(activePatient.nama)}</strong><span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span></div>
-                        <div class="hcu-result-meta">${escapeHcuHtml(latest.datetime)} · Shift ${escapeHcuHtml(latest.shift)}</div>
-                        <p style="margin:.65rem 0 .5rem;color:var(--gray-text);font-size:.85rem;">Silakan pilih TTV yang ingin diketahui:</p>
+                    <div class="hcu-patient-result hcu-condition-guide">
+                        <div class="hcu-result-title"><i class="fa-solid fa-stethoscope"></i> Kondisi Pasien</div>
+                        <div class="hcu-patient-identity">
+                            <strong>${escapeHcuHtml(activePatient.nama)}</strong>
+                            <span>No. RM: ${escapeHcuHtml(activePatient.rm)}</span>
+                        </div>
+                        ${latestMeta}
+
+                        <div class="condition-guide-item">
+                            <div class="condition-guide-title">🩸 <strong>TD — Tekanan Darah</strong></div>
+                            <div>Tekanan darah yang mengalir dalam pembuluh darah.</div>
+                            <small>Normal: 90/60–120/80 mmHg</small>
+                        </div>
+
+                        <div class="condition-guide-item">
+                            <div class="condition-guide-title">❤️ <strong>HR/Nadi — Denyut Jantung</strong></div>
+                            <div>Jumlah denyut jantung dalam satu menit.</div>
+                            <small>Normal: 60–100 ×/menit</small>
+                        </div>
+
+                        <div class="condition-guide-item">
+                            <div class="condition-guide-title">🫁 <strong>RR — Frekuensi Napas</strong></div>
+                            <div>Jumlah napas dalam satu menit.</div>
+                            <small>Normal: 12–20 ×/menit</small>
+                        </div>
+
+                        <div class="condition-guide-item">
+                            <div class="condition-guide-title">🌡️ <strong>Suhu — Suhu Tubuh</strong></div>
+                            <div>Menunjukkan tingkat panas tubuh.</div>
+                            <small>Normal: 36,5–37,5°C</small>
+                        </div>
+
+                        <div class="condition-guide-item">
+                            <div class="condition-guide-title">💧 <strong>SpO₂ — Saturasi Oksigen</strong></div>
+                            <div>Menunjukkan kadar oksigen dalam darah.</div>
+                            <small>Normal: 95–100%</small>
+                        </div>
+
+                        <div class="condition-guide-item">
+                            <div class="condition-guide-title">🧠 <strong>GCS — Tingkat Kesadaran</strong></div>
+                            <div>Menilai respons mata, bicara, dan gerakan pasien.</div>
+                            <small>Normal: 15</small>
+                        </div>
+
+                        <div class="condition-guide-item">
+                            <div class="condition-guide-title">🫧 <strong>Alat O₂ — Terapi Oksigen</strong></div>
+                            <div>Membantu memberikan tambahan oksigen kepada pasien.</div>
+                            <small>Penggunaan: sesuai kebutuhan pasien</small>
+                        </div>
+
+                        <div class="condition-guide-subtitle">🧠 GCS — Tingkat Kesadaran</div>
+                        <div class="condition-guide-desc">Menilai respons mata, bicara, dan gerakan pasien.</div>
+                        <div class="condition-guide-scale">
+                            <div>🟢 <strong>GCS 15 → Compos Mentis</strong>: sadar penuh dan mampu berkomunikasi baik.</div>
+                            <div>🟡 <strong>GCS 13–14 → Apatis</strong>: kesadaran menurun, respons lebih lambat.</div>
+                            <div>🟠 <strong>GCS 9–12 → Somnolen</strong>: mengantuk, mudah tertidur, tetapi masih dapat dibangunkan.</div>
+                            <div>🔴 <strong>GCS 3–8 → Koma</strong>: tidak sadar dan respons sangat minimal/tidak ada.</div>
+                        </div>
+
+                        <div class="condition-guide-subtitle">🫧 Alat O₂ — Terapi Oksigen</div>
+                        <div class="condition-guide-scale">
+                            <div>🟢 <strong>NC (Nasal Cannula)</strong> → Oksigen ringan</div>
+                            <div>🟡 <strong>NRBM</strong> → Oksigen sedang–tinggi</div>
+                            <div>🟠 <strong>HFNC (High Flow Nasal Cannula)</strong> → Oksigen aliran tinggi</div>
+                            <div>🔴 <strong>Jackson-Rees</strong> → Oksigen tinggi, dapat membantu ventilasi manual</div>
+                            <div>🔴 <strong>Tekanan Tinggi</strong> → Pemberian oksigen dengan tekanan tinggi sesuai kondisi pasien</div>
+                        </div>
+
+                        <div class="condition-guide-prompt">Pilih TTV di bawah ini untuk melihat <strong>data terbaru pasien satu per satu</strong> melalui chat:</div>
                         <div class="hcu-tvt-chat-options">
-                            <button type="button" onclick="askPatientVital('td','🩸 Tekanan Darah')"><span class="vital-icon">🩸</span><span><b>TD</b><small>Tekanan Darah</small></span></button>
-                            <button type="button" onclick="askPatientVital('nadi','❤️ HR / Nadi')"><span class="vital-icon">❤️</span><span><b>HR / Nadi</b><small>Heart Rate</small></span></button>
-                            <button type="button" onclick="askPatientVital('rr','🫁 RR')"><span class="vital-icon">🫁</span><span><b>RR</b><small>Pernapasan</small></span></button>
-                            <button type="button" onclick="askPatientVital('suhu','🌡️ Suhu')"><span class="vital-icon">🌡️</span><span><b>Suhu</b><small>Suhu Tubuh</small></span></button>
-                            <button type="button" onclick="askPatientVital('spo2','💧 SpO₂')"><span class="vital-icon">💧</span><span><b>SpO₂</b><small>Saturasi Oksigen</small></span></button>
-                            <button type="button" onclick="askPatientVital('o2device','🫧 Alat O2')"><span class="vital-icon">🫧</span><span><b>Alat O₂</b><small>Terapi Oksigen</small></span></button>
-                            <button type="button" onclick="askPatientVital('gcs','🧠 GCS')"><span class="vital-icon">🧠</span><span><b>GCS</b><small>Kesadaran</small></span></button>
+                            <button type="button" onclick="askPatientVital('td','🩸 TD — Tekanan Darah')"><span class="vital-icon">🩸</span><span><b>TD</b><small>Tekanan Darah</small></span></button>
+                            <button type="button" onclick="askPatientVital('nadi','❤️ HR / Nadi — Denyut Jantung')"><span class="vital-icon">❤️</span><span><b>HR / Nadi</b><small>Denyut Jantung</small></span></button>
+                            <button type="button" onclick="askPatientVital('rr','🫁 RR — Frekuensi Napas')"><span class="vital-icon">🫁</span><span><b>RR</b><small>Frekuensi Napas</small></span></button>
+                            <button type="button" onclick="askPatientVital('suhu','🌡️ Suhu — Suhu Tubuh')"><span class="vital-icon">🌡️</span><span><b>Suhu</b><small>Suhu Tubuh</small></span></button>
+                            <button type="button" onclick="askPatientVital('spo2','💧 SpO₂ — Saturasi Oksigen')"><span class="vital-icon">💧</span><span><b>SpO₂</b><small>Saturasi Oksigen</small></span></button>
+                            <button type="button" onclick="askPatientVital('o2device','🫧 Alat O₂ — Terapi Oksigen')"><span class="vital-icon">🫧</span><span><b>Alat O₂</b><small>Terapi Oksigen</small></span></button>
+                            <button type="button" onclick="askPatientVital('gcs','🧠 GCS — Tingkat Kesadaran')"><span class="vital-icon">🧠</span><span><b>GCS</b><small>Tingkat Kesadaran</small></span></button>
                         </div>
                     </div>`);
                 addUnifiedBackToPetugasButton();
