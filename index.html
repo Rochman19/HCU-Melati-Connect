@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<!-- BUILD: HCU-MELATI-KONDISI-OVERVIEW-FIX-2026-09-05 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HCU Melati Smart Care Connect - RSUD Bangil</title>
@@ -3397,7 +3398,7 @@
             if (tabType === 'chat') {
                 btnChat.classList.add('active');
                 contentChat.style.display = 'block';
-                renderPatientChats();
+                renderPatientChats({ scrollBottom: true });
             } else if (tabType === 'review') {
                 btnReview.classList.add('active');
                 contentReview.style.display = 'block';
@@ -3868,7 +3869,9 @@
             });
         }
 
-        function renderPatientChats() {
+        function renderPatientChats(options = {}) {
+            const forceBottom = options && options.scrollBottom === true;
+            const previousScrollTop = document.getElementById('patient-chat-messages')?.scrollTop || 0;
             const container = document.getElementById('patient-chat-messages');
             if (!container) return;
             container.innerHTML = '';
@@ -3927,12 +3930,23 @@
                 }
             });
 
-            container.scrollTop = container.scrollHeight;
+            // Jangan selalu memaksa scroll ke bawah. Realtime/render ulang harus
+            // mempertahankan posisi agar keluarga bisa membaca chat lama tanpa
+            // tiba-tiba dilempar kembali ke pesan paling bawah.
+            if (forceBottom) {
+                requestAnimationFrame(() => {
+                    container.scrollTop = container.scrollHeight;
+                });
+            } else {
+                requestAnimationFrame(() => {
+                    container.scrollTop = previousScrollTop;
+                });
+            }
         }
 
         function addUnifiedAssistantMessage(html) {
             unifiedAssistantMessages.push({ html, role: 'assistant', createdAt: Date.now() });
-            renderPatientChats();
+            renderPatientChats({ scrollBottom: true });
         }
 
         function addUnifiedUserAction(text) {
@@ -3944,7 +3958,7 @@
                 time,
                 createdAt: Date.now()
             });
-            renderPatientChats();
+            renderPatientChats({ scrollBottom: true });
         }
 
         function showUnifiedTyping() {
@@ -3954,7 +3968,9 @@
             typing.className = 'unified-assistant-message unified-typing-message';
             typing.innerHTML = `<div class="unified-assistant-label"><i class="fa-solid fa-robot"></i> Asisten HCU Melati</div><span class="typing-dots"><i></i><i></i><i></i></span>`;
             container.appendChild(typing);
-            container.scrollTop = container.scrollHeight;
+            requestAnimationFrame(() => {
+                container.scrollTop = container.scrollHeight;
+            });
             return typing;
         }
 
@@ -3992,7 +4008,8 @@
 
             saveDatabaseToStorage();
             input.value = '';
-            renderPatientChats();
+            // Pesan yang baru dikirim memang harus membawa tampilan ke bawah.
+            renderPatientChats({ scrollBottom: true });
 
             showIncomingChatPopup(
                 `Keluarga ${activePatient.nama} (RM: ${activePatient.rm})`,
@@ -4528,6 +4545,7 @@
         }
 
         function showHcuPatientConditionOverview(fromVerification = false) {
+            console.log("HCU Melati: Kondisi Pasien Overview FIX aktif");
             if (!activePatient) return hcuRequirePatient('condition');
             openUnifiedChat();
             if (fromVerification) {
